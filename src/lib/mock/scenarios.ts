@@ -1,0 +1,67 @@
+import { Scenario } from "@/types";
+
+export const mockScenario: Scenario = {
+  id: "scenario-001",
+  name: "Knee Arthroscopy",
+  procedureType: "Outpatient Surgery",
+  totalEstimatedCost: 12500,
+  insurancePortion: 9200,
+  userResponsibility: 3300,
+  hsaAvailable: 1850,
+  hsaRecommended: 1850,
+  paymentPlanMonths: 12,
+  monthlyPayment: 121,
+  financingAPR: 9.9,
+  financingMonthly: 143,
+  monthlyImpactPercent: 4.2,
+  financialStrainLevel: "moderate",
+  paymentScenarios: [
+    {
+      id: "ps-1",
+      label: "Pay with HSA + Monthly Plan",
+      monthlyAmount: 121,
+      totalCost: 3300,
+      duration: "12 months",
+      description: "Use $1,850 from HSA, then pay $121/mo for 12 months. No interest.",
+    },
+    {
+      id: "ps-2",
+      label: "Full HSA + Shorter Plan",
+      monthlyAmount: 242,
+      totalCost: 3300,
+      duration: "6 months",
+      description: "Use $1,850 from HSA, then pay $242/mo for 6 months. Fastest payoff.",
+    },
+    {
+      id: "ps-3",
+      label: "Medical Financing",
+      monthlyAmount: 143,
+      totalCost: 3630,
+      duration: "24 months",
+      description: "Finance full amount at 9.9% APR. Total cost is $330 more but lower monthly payments.",
+    },
+    {
+      id: "ps-4",
+      label: "Pay in Full",
+      monthlyAmount: 3300,
+      totalCost: 3300,
+      duration: "Immediate",
+      description: "Pay entire balance upfront. May be able to negotiate 5-10% discount.",
+    },
+  ],
+};
+
+export const mockProcedures = [
+  "Knee Arthroscopy",
+  "Appendectomy",
+  "Colonoscopy",
+  "Cataract Surgery",
+  "Hernia Repair",
+  "Tonsillectomy",
+  "Wisdom Teeth Removal",
+  "ACL Reconstruction",
+  "Childbirth (Vaginal)",
+  "C-Section",
+  "Hip Replacement",
+  "Spinal Fusion",
+];
