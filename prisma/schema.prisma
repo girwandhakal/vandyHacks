@@ -1,0 +1,143 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                String             @id @default(cuid())
+  name              String
+  email             String             @unique
+  avatar            String?
+  preferences       String             @default("{\"notifications\":true,\"emailDigest\":false,\"darkMode\":false,\"currency\":\"USD\"}")
+  connectedAccounts ConnectedAccount[]
+  conversations     Conversation[]
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+}
+
+model ConnectedAccount {
+  id       String   @id @default(cuid())
+  type     String   // "insurance" | "bank" | "hsa" | "fsa"
+  label    String
+  status   String   // "connected" | "disconnected" | "pending"
+  lastSync DateTime?
+  userId   String
+  user     User     @relation(fields: [userId], references: [id])
+}
+
+model InsurancePlan {
+  id                String @id @default(cuid())
+  name              String
+  provider          String
+  type              String // "PPO" | "HMO" | "EPO" | "POS"
+  planYearStart     String
+  planYearEnd       String
+  deductibleIndiv   Float
+  deductibleFamily  Float
+  deductibleMetIndiv  Float
+  deductibleMetFamily Float
+  oopMaxIndiv       Float
+  oopMaxFamily      Float
+  oopSpentIndiv     Float
+  oopSpentFamily    Float
+  coinsuranceIn     Float
+  coinsuranceOut    Float
+  copays            String  // JSON: CopaySchedule
+  pharmacyBenefits  String  // JSON: PharmacyBenefits
+  coverageRules     String  // JSON: string[]
+  exclusions        String  // JSON: string[]
+  priorAuthRequired String  // JSON: string[]
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+model Document {
+  id            String   @id @default(cuid())
+  name          String
+  type          String   // "insurance_plan" | "eob" | "medical_bill" | "estimate"
+  status        String   @default("uploading") // "uploading" | "analyzing" | "ready" | "error"
+  fileSize      String
+  filePath      String?
+  extractedData String?  // JSON: ExtractedBenefitSummary
+  uploadedAt    DateTime @default(now())
+}
+
+model Conversation {
+  id        String    @id @default(cuid())
+  title     String
+  userId    String
+  user      User      @relation(fields: [userId], references: [id])
+  messages  Message[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+model Message {
+  id                 String   @id @default(cuid())
+  role               String   // "user" | "assistant"
+  content            String
+  structuredResponse String?  // JSON: StructuredResponse
+  conversationId     String
+  conversation       Conversation @relation(fields: [conversationId], references: [id])
+  timestamp          DateTime @default(now())
+}
+
+model CareReminder {
+  id     String @id @default(cuid())
+  title  String
+  date   String
+  type   String
+  status String // "upcoming" | "overdue" | "completed"
+}
+
+model Activity {
+  id    String @id @default(cuid())
+  label String
+  time  String
+  icon  String
+  createdAt DateTime @default(now())
+}
+
+model Alert {
+  id          String  @id @default(cuid())
+  title       String
+  description String
+  type        String  // "info" | "warning" | "success" | "action"
+  actionLabel String?
+}
+
+model Insight {
+  id          String  @id @default(cuid())
+  title       String
+  description String
+  category    String  // "savings" | "timing" | "coverage" | "spending" | "network" | "action"
+  priority    String  // "high" | "medium" | "low"
+  actionLabel String?
+  icon        String
+}
+
+model Scenario {
+  id                   String @id @default(cuid())
+  name                 String
+  procedureType        String
+  totalEstimatedCost   Float
+  insurancePortion     Float
+  userResponsibility   Float
+  hsaAvailable         Float
+  hsaRecommended       Float
+  paymentPlanMonths    Int
+  monthlyPayment       Float
+  financingAPR         Float
+  financingMonthly     Float
+  monthlyImpactPercent Float
+  financialStrainLevel String // "low" | "moderate" | "high"
+  paymentScenarios     String // JSON: PaymentScenario[]
+  createdAt            DateTime @default(now())
+}

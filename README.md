@@ -5,11 +5,39 @@ A premium healthcare cost and insurance guidance app built for VandyHacks. Helps
 ## Quick Start
 
 ```bash
+# 1. Install dependencies
 npm install
+
+# 2. Set up environment variables
+cp .env.example .env
+# Then edit .env and add your real OPENAI_API_KEY
+
+# 3. Set up the database
+npm run db:push    # Create the SQLite database from the schema
+npm run db:seed    # Seed the database with mock data
+
+# 4. Start the dev server
 npm run dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000).
+
+## Environment Variables
+
+Copy `.env.example` to `.env` and fill in the values:
+
+| Variable | Description |
+|----------|-------------|
+| `DATABASE_URL` | SQLite database path (default: `file:./dev.db`) |
+| `OPENAI_API_KEY` | Your OpenAI API key for the AI Assistant feature |
+
+## Database Scripts
+
+| Command | Description |
+|---------|-------------|
+| `npm run db:push` | Push the Prisma schema to the SQLite database |
+| `npm run db:seed` | Seed the database with sample data |
+| `npm run db:studio` | Open Prisma Studio to browse the database |
 
 ## Tech Stack
 
