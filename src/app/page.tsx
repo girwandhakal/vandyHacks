@@ -15,7 +15,6 @@ import {
   Upload,
   Shield,
   GitBranch,
-  Lightbulb,
   FileUp,
   FileText,
   ArrowRight,
@@ -28,7 +27,7 @@ import {
 } from "lucide-react";
 
 const iconMap: Record<string, React.ElementType> = {
-  Calculator, MessageSquare, Upload, Shield, GitBranch, Lightbulb,
+  Calculator, MessageSquare, Upload, Shield, GitBranch,
   FileUp, FileText, Wallet, TrendingUp,
 };
 
@@ -79,7 +78,6 @@ export default function DashboardPage() {
     { id: "3", label: "Upload Bill", icon: "Upload", href: "/documents" },
     { id: "4", label: "Coverage", icon: "Shield", href: "/insurance" },
     { id: "5", label: "Scenarios", icon: "GitBranch", href: "/scenarios" },
-    { id: "6", label: "Insights", icon: "Lightbulb", href: "/insights" },
   ];
 
   return (

@@ -124,16 +124,6 @@ model Activity {
   createdAt DateTime @default(now())
 }
 
-model Insight {
-  id          String  @id @default(cuid())
-  title       String
-  description String
-  category    String  // "savings" | "timing" | "coverage" | "spending" | "network" | "action"
-  priority    String  // "high" | "medium" | "low"
-  actionLabel String?
-  icon        String
-}
-
 model Scenario {
   id                   String @id @default(cuid())
   name                 String
