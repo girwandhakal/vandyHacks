@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import confetti from "canvas-confetti";
 import { AnimateIn } from "@/components/shared/animate-in";
 import { PageHeader } from "@/components/shared/page-header";
 import { StatusBadge } from "@/components/shared/status-badge";
@@ -19,6 +18,71 @@ import {
   TrendingDown,
   CheckCircle2,
 } from "lucide-react";
+
+function fireSelectionBurst() {
+  if (typeof window === "undefined" || typeof document === "undefined") {
+    return;
+  }
+
+  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    return;
+  }
+
+  const colors = ["#3A86FF", "#10B981", "#F8F9FA"];
+  const container = document.createElement("div");
+  container.setAttribute("aria-hidden", "true");
+  container.style.position = "fixed";
+  container.style.left = "0";
+  container.style.top = "0";
+  container.style.width = "100vw";
+  container.style.height = "100vh";
+  container.style.pointerEvents = "none";
+  container.style.overflow = "hidden";
+  container.style.zIndex = "9999";
+
+  for (let index = 0; index < 28; index += 1) {
+    const particle = document.createElement("span");
+    const angle = (Math.PI * 2 * index) / 28;
+    const distance = 120 + Math.random() * 140;
+    const size = 8 + Math.random() * 6;
+    const duration = 700 + Math.random() * 300;
+
+    particle.style.position = "absolute";
+    particle.style.left = "50%";
+    particle.style.top = "60%";
+    particle.style.width = `${size}px`;
+    particle.style.height = `${size * 0.55}px`;
+    particle.style.backgroundColor = colors[index % colors.length];
+    particle.style.borderRadius = "999px";
+    particle.style.opacity = "0.95";
+    particle.style.transform = "translate(-50%, -50%)";
+
+    container.appendChild(particle);
+
+    particle.animate(
+      [
+        {
+          transform: "translate(-50%, -50%) scale(1) rotate(0deg)",
+          opacity: 1,
+        },
+        {
+          transform: `translate(calc(-50% + ${Math.cos(angle) * distance}px), calc(-50% + ${Math.sin(angle) * distance}px)) scale(0.5) rotate(${180 + Math.random() * 180}deg)`,
+          opacity: 0,
+        },
+      ],
+      {
+        duration,
+        easing: "cubic-bezier(0.22, 1, 0.36, 1)",
+        fill: "forwards",
+      },
+    );
+  }
+
+  document.body.appendChild(container);
+  window.setTimeout(() => {
+    container.remove();
+  }, 1200);
+}
 
 export default function ScenariosPage() {
   const [selectedProcedure, setSelectedProcedure] = useState(mockProcedures[0]);
@@ -56,12 +120,7 @@ export default function ScenariosPage() {
   const handleSelectPlan = (planId: string) => {
     if (selectedPlan !== planId) {
       setSelectedPlan(planId);
-      confetti({
-        particleCount: 120,
-        spread: 80,
-        origin: { y: 0.6 },
-        colors: ['#3A86FF', '#10B981', '#F8F9FA']
-      });
+      fireSelectionBurst();
     } else {
       setSelectedPlan(null);
     }
