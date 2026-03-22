@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { plaidClient } from '@/lib/plaid/client';
 import { PrismaClient } from '@prisma/client';
 import { normalizeTransaction } from '@/lib/plaid/normalization';
+import { syncPlaidAccountsForItem } from '@/lib/plaid/accounts';
 
 const prisma = new PrismaClient();
 
@@ -11,6 +12,7 @@ export async function POST(req: Request) {
 
     const item = await prisma.plaidItem.findUnique({ where: { plaidItemId: itemId } });
     if (!item) throw new Error('Item not found');
+    await syncPlaidAccountsForItem(prisma, item);
 
     let cursor = item.cursor || undefined;
     let added: any[] = [];

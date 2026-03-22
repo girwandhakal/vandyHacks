@@ -143,7 +143,10 @@ export function buildMedicalDebtStrategies(params: {
   const balance = Math.max(num(bill.currentBalance), num(bill.patientResponsibility));
   const payNowCapacity = num(
     profile.availableMedicalPaymentCapacityNow,
-    num(profile.checkingLiquidity) + num(profile.hsaBalance) + num(profile.fsaBalance),
+    num(
+      profile.savingsBuffer,
+      num(profile.checkingLiquidity) + num(profile.hsaBalance) + num(profile.fsaBalance),
+    ),
   );
   const monthlyCapacity = num(
     profile.availableMedicalPaymentCapacityMonthly,
@@ -317,7 +320,7 @@ export function buildMedicalDebtStrategies(params: {
       ? `Linked EOB shows patient responsibility near $${num(eob.patientResponsibility).toFixed(2)}. ${deductibleProgress}.`
       : `No linked EOB is available yet. ${deductibleProgress}.`;
 
-  const financialSummary = `Affordability risk is ${affordabilityRisk}. Estimated pay-now capacity is $${payNowCapacity.toFixed(2)} and sustainable monthly medical payment capacity is about $${monthlyCapacity.toFixed(2)}.`;
+  const financialSummary = `Affordability risk is ${affordabilityRisk}. Estimated liquid savings or pay-now capacity is $${payNowCapacity.toFixed(2)} and sustainable monthly medical payment capacity is about $${monthlyCapacity.toFixed(2)}.`;
 
   return {
     recommendedPrimaryStrategy: options[0]?.label || "Validate the bill before paying",

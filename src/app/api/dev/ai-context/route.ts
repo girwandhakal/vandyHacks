@@ -87,11 +87,10 @@ export async function GET(req: Request) {
       .filter(account => `${account.name} ${account.officialName || ''}`.toLowerCase().includes('fsa'))
       .reduce((sum, account) => sum + (account.availableBalance ?? account.currentBalance ?? 0), 0);
     const freeCashFlow = monthlyIncomeEstimate - monthlyFixedCosts - monthlyVariableCosts - monthlyDebtPayments;
-    const randomSavingsMultiplier = randomIntInclusive(1, 12);
-    const generatedSavingsBuffer = Math.round(Math.max(0, freeCashFlow) * randomSavingsMultiplier * 100) / 100;
     const actualSavingsBuffer = checkingLiquidity + hsaBalance + fsaBalance;
+    const generatedSavingsBuffer = Math.round(Math.max(0, freeCashFlow) * randomIntInclusive(1, 12) * 100) / 100;
     const effectiveSavingsBuffer = actualSavingsBuffer > 0 ? actualSavingsBuffer : generatedSavingsBuffer;
-    const effectiveCheckingLiquidity = checkingLiquidity > 0 ? checkingLiquidity : effectiveSavingsBuffer;
+    const effectiveCheckingLiquidity = checkingLiquidity > 0 ? checkingLiquidity : 0;
 
     const profile: FinancialProfileInput = {
       incomeEstimate: monthlyIncomeEstimate,
@@ -99,7 +98,6 @@ export async function GET(req: Request) {
       variableCosts: monthlyVariableCosts,
       debtPayments: monthlyDebtPayments,
       medicalSpend: monthlyMedicalSpend,
-      // When sandbox account balances are unavailable, synthesize a savings buffer from free cash flow.
       savingsBuffer: effectiveSavingsBuffer,
     };
 

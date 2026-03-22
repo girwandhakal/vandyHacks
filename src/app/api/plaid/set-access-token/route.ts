@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { plaidClient } from '@/lib/plaid/client';
 import { PrismaClient } from '@prisma/client';
+import { syncPlaidAccountsForItem } from '@/lib/plaid/accounts';
 import {
   DEFAULT_FINANCIAL_USER_ID,
   ensureDefaultFinancialUser,
@@ -37,7 +38,7 @@ export async function POST(req: Request) {
     await ensureDefaultFinancialUser(prisma);
     await resetStoredFinancialData(prisma);
 
-    await prisma.plaidItem.create({
+    const storedItem = await prisma.plaidItem.create({
        data: {
           userId: userId,
           plaidItemId: itemId,
@@ -47,6 +48,7 @@ export async function POST(req: Request) {
           status: 'active'
        }
     });
+    await syncPlaidAccountsForItem(prisma, storedItem);
 
     return NextResponse.json({ success: true, itemId });
   } catch (error: any) {
