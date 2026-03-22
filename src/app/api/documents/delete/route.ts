@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import fs from "fs";
 import path from "path";
+import { recalculateFinancials } from "../utils";
 
 export async function POST(request: Request) {
   try {
@@ -22,14 +23,16 @@ export async function POST(request: Request) {
     // Cascade deletion: if this is a Bill, also delete any attached EOBs so they don't become invisible ghosts
     if (doc.type === "medical_bill") {
        await prisma.document.deleteMany({
-          where: { linkedBillId: documentId }
+          where: { linkedBillId: documentId } as any
        });
-    }
+    } 
 
     // Delete from Database
     await prisma.document.delete({
       where: { id: documentId }
     });
+
+    await recalculateFinancials();
 
     // Attempt to physically delete the files to prevent bloat
     if (doc.filePath) {
@@ -50,3 +53,4 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Failed to delete document" }, { status: 500 });
   }
 }
+

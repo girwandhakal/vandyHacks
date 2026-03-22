@@ -147,6 +147,9 @@ export default function DashboardPage() {
                 variant={plan.deductiblePercent >= 80 ? "danger" : plan.deductiblePercent >= 50 ? "warning" : "accent"}
                 className="mt-2"
               />
+              {plan.deductibleMetIndiv >= plan.deductibleIndiv && (
+                <p className="text-xs text-success mt-2 font-medium">Insurance is now paying {plan.coinsuranceIn || 80}% for in-network care!</p>
+              )}
             </div>
           </div>
 
@@ -173,6 +176,9 @@ export default function DashboardPage() {
                 variant={plan.oopPercent >= 80 ? "danger" : plan.oopPercent >= 50 ? "warning" : "accent"}
                 className="mt-2"
               />
+              {plan.oopSpentIndiv >= plan.oopMaxIndiv && (
+                <p className="text-xs text-success mt-2 font-medium">Insurance is covering all until end of policy year!</p>
+              )}
             </div>
           </div>
         </div>

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { recalculateFinancials } from "../utils";
 
 export async function POST(request: Request) {
   try {
@@ -17,7 +18,7 @@ export async function POST(request: Request) {
 
     // Restore the connected EOB to active status
     const linkedEob = await prisma.document.findFirst({
-       where: { linkedBillId: billId }
+       where: { linkedBillId: billId } as any
     });
 
     if (linkedEob) {
@@ -27,9 +28,12 @@ export async function POST(request: Request) {
        });
     }
 
+    await recalculateFinancials();
+
     return NextResponse.json({ success: true, document: updatedBill });
   } catch (error) {
     console.error("Error unsettling document:", error);
     return NextResponse.json({ error: "Failed to unsettle document claim" }, { status: 500 });
   }
 }
+
