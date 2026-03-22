@@ -32,6 +32,9 @@ Copy `.env.example` to `.env` and fill in the values:
 |----------|-------------|
 | `DATABASE_URL` | SQLite database path (default: `file:./dev.db`) |
 | `OPENAI_API_KEY` | Your OpenAI API key for the AI Assistant feature |
+| `PLAID_CLIENT_ID` | Your Plaid Client ID (Sandbox) |
+| `PLAID_SECRET` | Your Plaid Secret (Sandbox) |
+| `PLAID_ENV` | Must be set to `sandbox` |
 
 ## Database Scripts
 
@@ -39,7 +42,20 @@ Copy `.env.example` to `.env` and fill in the values:
 |---------|-------------|
 | `npm run db:push` | Push the Prisma schema to the SQLite database |
 | `npm run db:seed` | Seed the database with sample data |
+| `npm run seed:plaid` | Seed the database with Plaid sandbox personas |
 | `npm run db:studio` | Open Prisma Studio to browse the database |
+
+## Plaid Sandbox Testing
+
+We have built a dedicated Plaid Sandbox integration to simulate incoming financial and medical data.
+
+**To test the Plaid integration:**
+1. Navigate to [http://localhost:3000/dev/plaid](http://localhost:3000/dev/plaid)
+2. Use the UI to:
+   - Link a sandbox bank account or auto-create a mock item.
+   - Inject fake medical bill transactions.
+   - Run the transaction sync engine (`/api/plaid/sync`).
+   - Generate financial health AI context JSON.
 
 ## Tech Stack
 

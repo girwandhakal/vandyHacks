@@ -1,0 +1,7 @@
+Medical Bill
+Patient Name,Date of Service,Provider,Description,Procedure Code,Total Charged
+Sophia Nguyen,2026-08-27,North Valley Surgical Hospital,Pre-Op Evaluation and Clearance,99245,$220.00
+Sophia Nguyen,2026-08-27,North Valley Surgical Hospital,Anesthesia Services,01967,$650.00
+Sophia Nguyen,2026-08-27,North Valley Surgical Hospital,Operating Room and Recovery,OR220,$1600.00
+Sophia Nguyen,2026-08-27,North Valley Surgical Hospital,Laparoscopic Cholecystectomy,47562,$2100.00
+Sophia Nguyen,2026-08-27,North Valley Surgical Hospital,Pathology and Surgical Specimen Review,88304,$350.00

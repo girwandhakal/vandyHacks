@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { syncDocumentModels } from "@/lib/ai/document-sync";
 
 export async function POST(request: Request) {
   try {
@@ -14,6 +15,9 @@ export async function POST(request: Request) {
       where: { id: eobId },
       data: { linkedBillId: billId }
     });
+
+    await syncDocumentModels(billId);
+    await syncDocumentModels(eobId);
 
     return NextResponse.json({ success: true, document: updatedDocument });
   } catch (error) {

@@ -16,11 +16,24 @@ model User {
   email             String             @unique
   avatar            String?
   preferences       String             @default("{\"notifications\":true,\"emailDigest\":false,\"darkMode\":false,\"currency\":\"USD\"}")
-  connectedAccounts ConnectedAccount[]
-  conversations     Conversation[]
-  createdAt         DateTime           @default(now())
-  updatedAt         DateTime           @updatedAt
+  connectedAccounts            ConnectedAccount[]
+  conversations                Conversation[]
+  createdAt                    DateTime                     @default(now())
+  updatedAt                    DateTime                     @updatedAt
+  plaidItems                   PlaidItem[]
+  plaidAccounts                PlaidAccount[]
+  plaidTransactionsRaw         PlaidTransactionRaw[]
+  plaidTransactionsNorm        PlaidTransactionNormalized[]
+  financialProfiles            FinancialProfileSnapshot[]
+  insuranceAccumulators        InsuranceAccumulatorStatus[]
+  aiContextSnapshots           AIContextSnapshot[]
+  medicalBills                 MedicalBill[]
+  explanationOfBenefits        ExplanationOfBenefits[]
+  billEobLinks                 BillEobLink[]
+  insurancePlanDocumentSummaries InsurancePlanDocumentSummary[]
+  medicalDebtStrategySnapshots MedicalDebtStrategySnapshot[]
 }
+
 
 model ConnectedAccount {
   id       String   @id @default(cuid())
@@ -69,6 +82,9 @@ model Document {
   linkedBillId  String?  // Relation to another document if type="eob"
   isSettled     Boolean  @default(false)
   uploadedAt    DateTime @default(now())
+  medicalBill   MedicalBill?
+  explanationOfBenefits ExplanationOfBenefits?
+  insurancePlanDocumentSummary InsurancePlanDocumentSummary?
 }
 
 model Conversation {
@@ -86,6 +102,7 @@ model Message {
   role               String   // "user" | "assistant"
   content            String
   structuredResponse String?  // JSON: StructuredResponse
+  contextMeta        String?  // JSON: assistant context packet metadata
   conversationId     String
   conversation       Conversation @relation(fields: [conversationId], references: [id])
   timestamp          DateTime @default(now())
@@ -143,3 +160,253 @@ model Scenario {
   paymentScenarios     String // JSON: PaymentScenario[]
   createdAt            DateTime @default(now())
 }
+
+model PlaidItem {
+  id                   String                 @id @default(cuid())
+  userId               String
+  user                 User                   @relation(fields: [userId], references: [id])
+  plaidItemId          String                 @unique
+  accessTokenEncrypted String
+  institutionId        String?
+  institutionName      String?
+  cursor               String?
+  status               String                 @default("active") // "active" | "error"
+  lastSyncedAt         DateTime?
+  accounts             PlaidAccount[]
+  transactions         PlaidTransactionRaw[]
+  createdAt            DateTime               @default(now())
+  updatedAt            DateTime               @updatedAt
+}
+
+model PlaidAccount {
+  id               String      @id @default(cuid())
+  userId           String
+  user             User        @relation(fields: [userId], references: [id])
+  plaidItemId      String
+  item             PlaidItem   @relation(fields: [plaidItemId], references: [id])
+  plaidAccountId   String      @unique
+  name             String
+  officialName     String?
+  type             String
+  subtype          String?
+  currentBalance   Float?
+  availableBalance Float?
+  mask             String?
+  isoCurrencyCode  String?
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+}
+
+model PlaidTransactionRaw {
+  id                 String                      @id @default(cuid())
+  userId             String
+  user               User                        @relation(fields: [userId], references: [id])
+  plaidItemId        String
+  item               PlaidItem                   @relation(fields: [plaidItemId], references: [id])
+  plaidTransactionId String                      @unique
+  plaidAccountId     String
+  amount             Float
+  dateAuthorized     DateTime?
+  datePosted         DateTime?
+  name               String
+  merchantName       String?
+  pending            Boolean                     @default(false)
+  categoryJson       String?                     // JSON string
+  paymentChannel     String?
+  originalJson       String                      // JSON string of full payload
+  syncedAt           DateTime                    @default(now())
+  normalized         PlaidTransactionNormalized?
+}
+
+model PlaidTransactionNormalized {
+  id                 String              @id @default(cuid())
+  userId             String
+  user               User                @relation(fields: [userId], references: [id])
+  rawTransactionId   String              @unique
+  rawTransaction     PlaidTransactionRaw @relation(fields: [rawTransactionId], references: [id], onDelete: Cascade)
+  normalizedCategory String
+  cashflowDirection  String              // "inflow" | "outflow"
+  essentialityScore  String              // "essential" | "discretionary" | "wasteful" | "unknown"
+  recurringCandidate Boolean             @default(false)
+  merchantCanonical  String?
+  confidence         String              // "high" | "medium" | "low"
+  tagsJson           String?             // JSON string array
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+}
+
+model FinancialProfileSnapshot {
+  id                        String   @id @default(cuid())
+  userId                    String
+  user                      User     @relation(fields: [userId], references: [id])
+  asOfDate                  DateTime @default(now())
+  monthlyIncomeEstimate     Float?
+  monthlyFixedCosts         Float?
+  monthlyVariableCosts      Float?
+  monthlyMedicalSpend       Float?
+  monthlyDebtPayments       Float?
+  monthlySubscriptions      Float?
+  savingsRate               Float?
+  freeCashFlow              Float?
+  emergencyBufferMonths     Float?
+  housingStatus             String?  // "rent" | "own" | "other"
+  housingPaymentEstimate    Float?
+  affordabilityRiskLevel    String?  // "low" | "medium" | "high" | "critical"
+  checkingLiquidity         Float?
+  hsaBalance                Float?
+  fsaBalance                Float?
+  creditCardMinimums        Float?
+  loanPayments              Float?
+  dependentsCount           Int?
+  employmentStatus          String?
+  creditStressLevel         String?
+  monthlyRentOrMortgage     Float?
+  monthlyEssentialSpend     Float?
+  monthlyDiscretionarySpend Float?
+  availableMedicalPaymentCapacityNow Float?
+  availableMedicalPaymentCapacityMonthly Float?
+  hardshipIndicatorsJson    String?
+  insightsJson              String?  // JSON
+  createdAt                 DateTime @default(now())
+}
+
+model InsuranceAccumulatorStatus {
+  id                  String   @id @default(cuid())
+  userId              String
+  user                User     @relation(fields: [userId], references: [id])
+  asOfDate            DateTime @default(now())
+  deductibleMet       Float
+  oopMet              Float
+  deductibleRemaining Float
+  oopRemaining        Float
+  claimsYtdJson       String?  // JSON
+  createdAt           DateTime @default(now())
+}
+
+model AIContextSnapshot {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id])
+  asOfDate   DateTime @default(now())
+  contextJson String   // JSON
+  version    String
+  createdAt  DateTime @default(now())
+}
+
+model MedicalBill {
+  id                       String   @id @default(cuid())
+  userId                   String
+  user                     User     @relation(fields: [userId], references: [id])
+  documentId               String?  @unique
+  document                 Document? @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  providerName             String?
+  accountNumber            String?
+  statementDate            String?
+  dueDate                  String?
+  dateOfServiceStart       String?
+  dateOfServiceEnd         String?
+  originalAmount           Float    @default(0)
+  currentBalance           Float    @default(0)
+  patientResponsibility    Float    @default(0)
+  status                   String   @default("open")
+  careType                 String?
+  isFacilityBill           Boolean  @default(false)
+  isProfessionalBill       Boolean  @default(false)
+  inNetworkStatus          String?
+  negotiationEligible      Boolean  @default(true)
+  charityCareEligible      Boolean  @default(false)
+  installmentPlanAvailable Boolean  @default(false)
+  notesJson                String?
+  createdAt                DateTime @default(now())
+  updatedAt                DateTime @updatedAt
+  eobLinks                 BillEobLink[] @relation("BillToLink")
+  strategySnapshots        MedicalDebtStrategySnapshot[]
+}
+
+model ExplanationOfBenefits {
+  id                   String   @id @default(cuid())
+  userId               String
+  user                 User     @relation(fields: [userId], references: [id])
+  documentId           String?  @unique
+  document             Document? @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  claimNumber          String?
+  payerName            String?
+  providerName         String?
+  patientName          String?
+  statementDate        String?
+  dateOfServiceStart   String?
+  dateOfServiceEnd     String?
+  billedAmount         Float    @default(0)
+  allowedAmount        Float    @default(0)
+  planPaidAmount       Float    @default(0)
+  patientResponsibility Float   @default(0)
+  deductibleApplied    Float    @default(0)
+  coinsuranceApplied   Float    @default(0)
+  copayApplied         Float    @default(0)
+  nonCoveredAmount     Float    @default(0)
+  outOfNetworkPenalty  Float    @default(0)
+  claimStatus          String?
+  denialReason         String?
+  notesJson            String?
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+  billLinks            BillEobLink[] @relation("EobToLink")
+}
+
+model BillEobLink {
+  id                   String   @id @default(cuid())
+  userId               String
+  user                 User     @relation(fields: [userId], references: [id])
+  medicalBillId        String
+  medicalBill          MedicalBill @relation("BillToLink", fields: [medicalBillId], references: [id], onDelete: Cascade)
+  eobId                String
+  eob                  ExplanationOfBenefits @relation("EobToLink", fields: [eobId], references: [id], onDelete: Cascade)
+  matchConfidence      Float    @default(0)
+  matchedBy            String   @default("rule")
+  reconciliationStatus String   @default("matched")
+  balanceDelta         Float    @default(0)
+  notesJson            String?
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  @@unique([eobId])
+}
+
+model InsurancePlanDocumentSummary {
+  id                          String   @id @default(cuid())
+  userId                      String
+  user                        User     @relation(fields: [userId], references: [id])
+  documentId                  String   @unique
+  document                    Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  planId                      String?
+  planOverviewJson            String?
+  costSharingRulesJson        String?
+  priorAuthRulesJson          String?
+  appealsRulesJson            String?
+  billingProtectionRulesJson  String?
+  negotiationRelevantRulesJson String?
+  sourceExcerptsJson          String?
+  version                     String   @default("v1")
+  createdAt                   DateTime @default(now())
+  updatedAt                   DateTime @updatedAt
+}
+
+model MedicalDebtStrategySnapshot {
+  id                         String   @id @default(cuid())
+  userId                     String
+  user                       User     @relation(fields: [userId], references: [id])
+  medicalBillId              String
+  medicalBill                MedicalBill @relation(fields: [medicalBillId], references: [id], onDelete: Cascade)
+  asOfDate                   DateTime @default(now())
+  recommendedPrimaryStrategy String?
+  strategyRankingJson        String?
+  payNowScore                Float    @default(0)
+  installmentScore           Float    @default(0)
+  negotiationScore           Float    @default(0)
+  charityScore               Float    @default(0)
+  loanScore                  Float    @default(0)
+  appealScore                Float    @default(0)
+  confidence                 String?
+  createdAt                  DateTime @default(now())
+}
+

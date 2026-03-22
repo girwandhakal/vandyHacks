@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { removeBillEobLinkForEobDocument } from "@/lib/ai/document-sync";
 
 export async function POST(request: Request) {
   try {
@@ -10,9 +11,9 @@ export async function POST(request: Request) {
     }
 
     // Sever the connection from the EOB to its Bill
-    const updatedDocument = await prisma.document.update({
+    await removeBillEobLinkForEobDocument(eobId);
+    const updatedDocument = await prisma.document.findUnique({
       where: { id: eobId },
-      data: { linkedBillId: null }
     });
 
     return NextResponse.json({ success: true, document: updatedDocument });

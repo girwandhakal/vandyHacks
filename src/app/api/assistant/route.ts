@@ -4,7 +4,7 @@ import { chatWithGemini } from "@/lib/gemini";
 
 export async function POST(request: Request) {
   try {
-    const { message, conversationId } = await request.json();
+    const { message, conversationId, billId } = await request.json();
     const user = await prisma.user.findFirst();
 
     if (!user) {
@@ -44,7 +44,12 @@ export async function POST(request: Request) {
     });
 
     // Call Gemini
-    const geminiResponse = await chatWithGemini(message, conversationHistory);
+    const geminiResponse = await chatWithGemini({
+      userId: user.id,
+      userMessage: message,
+      conversationHistory,
+      explicitBillId: billId || undefined,
+    });
 
     // Save assistant response to DB
     const assistantMsg = await prisma.message.create({
@@ -52,6 +57,7 @@ export async function POST(request: Request) {
         role: "assistant",
         content: geminiResponse.content,
         structuredResponse: geminiResponse.structuredResponse ? JSON.stringify(geminiResponse.structuredResponse) : null,
+        contextMeta: JSON.stringify(geminiResponse.contextMeta),
         conversationId: currentConvId,
       },
     });
@@ -63,6 +69,7 @@ export async function POST(request: Request) {
         role: assistantMsg.role,
         content: assistantMsg.content,
         structuredResponse: geminiResponse.structuredResponse,
+        contextMeta: geminiResponse.contextMeta,
         timestamp: assistantMsg.timestamp,
       },
       title: !conversationId ? (message.substring(0, 30) + "...") : undefined,

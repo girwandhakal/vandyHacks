@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { syncDocumentModels } from "@/lib/ai/document-sync";
 import { recalculateFinancials } from "../utils";
 
 export async function POST(request: Request) {
@@ -26,7 +27,10 @@ export async function POST(request: Request) {
           where: { id: linkedEob.id },
           data: { isSettled: true } as any
        });
+       await syncDocumentModels(linkedEob.id);
     }
+
+    await syncDocumentModels(billId);
 
     // Always recalculate from strict DB state to prevent drift
     await recalculateFinancials();

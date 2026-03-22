@@ -1,4 +1,6 @@
 Medical Bill
 Patient Name,Date of Service,Provider,Description,Procedure Code,Total Charged
-Robert Johnson,2026-05-02,Orthopedic Specialists,Office Visit,99213,$150.00
-Robert Johnson,2026-05-02,Orthopedic Specialists,X-Ray Knee,73562,$120.00
+Marcus Hill,2026-06-09,Metro Imaging Center,Specialist Consultation,99243,$120.00
+Marcus Hill,2026-06-09,Metro Imaging Center,MRI Lumbar Spine Without Contrast,72148,$520.00
+Marcus Hill,2026-06-09,Metro Imaging Center,Radiologist Interpretation,72195,$80.00
+Marcus Hill,2026-06-09,Metro Imaging Center,Facility Charge Outpatient Imaging,FC100,$100.00

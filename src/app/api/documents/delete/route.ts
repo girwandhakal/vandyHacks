@@ -37,7 +37,8 @@ export async function POST(request: Request) {
     // Attempt to physically delete the files to prevent bloat
     if (doc.filePath) {
       try {
-        const docFile = path.join(process.cwd(), "public", doc.filePath);
+        const relative = doc.filePath.replace(/^[/\\]+/, "");
+        const docFile = path.join(process.cwd(), relative);
         if (fs.existsSync(docFile)) fs.unlinkSync(docFile);
         
         const txtFile = docFile + ".txt";

@@ -1,211 +1,353 @@
 import OpenAI from "openai";
-import { prisma } from "./db";
+import { buildContextPacket } from "@/lib/ai/context/build-context-packet";
+import { buildMedicalFinancialAdvisorPrompt } from "@/lib/ai/prompts/medical-financial-advisor";
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY || "",
 });
 
-import fs from "fs";
-import path from "path";
+type StrategyOption = {
+  label: string;
+  recommended: boolean;
+  feasibility: "high" | "medium" | "low";
+  monthlyCost: number;
+  totalCost: number;
+  pros: string[];
+  cons: string[];
+  requiredActions: string[];
+  whyItFitsUser: string;
+};
 
-export async function getHealthcareSystemPrompt(): Promise<string> {
-  // Load user's insurance plan for context
-  const plan = await prisma.insurancePlan.findFirst();
+type StructuredResponse = {
+  answer: string;
+  situationSummary: string;
+  billAssessment: string;
+  insuranceAssessment: string;
+  financialAssessment: string;
+  recommendedStrategy: string;
+  strategyOptions: StrategyOption[];
+  immediateNextSteps: string[];
+  documentsReferenced: Array<{ id: string; type: string; label: string }>;
+  assumptions: string[];
+  missingInformation: string[];
+  confidenceLevel: "high" | "medium" | "low";
+  followUpQuestions: string[];
+};
 
-  // Load the newest parsed document text to serve as ground-truth memory
-  const latestDoc = await prisma.document.findFirst({
-    where: { type: "insurance_plan", status: "ready" },
-    orderBy: { uploadedAt: "desc" }
-  });
-
-  let documentContext = "";
-  if (latestDoc && latestDoc.filePath) {
-    try {
-      const txtPath = path.join(process.cwd(), latestDoc.filePath + ".txt");
-      if (fs.existsSync(txtPath)) {
-        const rawText = fs.readFileSync(txtPath, "utf-8");
-        // Limit context to 15,000 chars to avoid token explosion
-        documentContext = `\n\n--- RAW INSURANCE DOCUMENT CONTEXT ---\nThe following is the actual unedited text extracted from the user's uploaded insurance document. Use this to definitively answer detailed coverage questions, copay questions, or rule questions.\nText:\n${rawText.substring(0, 15000)}\n----------------------------------------\n`;
-      }
-    } catch (e) {
-      console.error("Failed to load document context from disk:", e);
-    }
-  }
-
-  let planContext = "No insurance plan data available.";
-  if (plan) {
-    const copays = JSON.parse(plan.copays || "{}");
-    planContext = `
-User's Insurance Plan Summary:
-- Plan: ${plan.name} (${plan.type})
-- Network: ${plan.provider}
-- Plan Year: ${plan.planYearStart} to ${plan.planYearEnd}
-- Deductible: $${plan.deductibleIndiv} individual / $${plan.deductibleFamily} family
-- Deductible Met: $${plan.deductibleMetIndiv} individual / $${plan.deductibleMetFamily} family
-- Out-of-Pocket Max: $${plan.oopMaxIndiv} individual / $${plan.oopMaxFamily} family
-- Out-of-Pocket Spent: $${plan.oopSpentIndiv} individual / $${plan.oopSpentFamily} family
-- Coinsurance: ${plan.coinsuranceIn}% in-network / ${plan.coinsuranceOut}% out-of-network
-- Copays: Primary Care $${copays.primaryCare || 0}, Specialist $${copays.specialist || 0}, Urgent Care $${copays.urgentCare || 0}, ER $${copays.emergencyRoom || 0}, Telehealth $${copays.telehealth || 0}
-    `.trim();
-  }
-
-  return `You are a strict, highly accurate healthcare cost intelligence assistant for ClearPath.
-
-CRITICAL INSTRUCTION: You MUST prioritize the "RAW INSURANCE DOCUMENT CONTEXT" block above everything else. The "User's Insurance Plan Summary" contains some baseline/mock application data (such as "Blue Cross Blue Shield", specific start dates, or specific dollars already spent). DO NOT quote these baseline providers, dates, or values back to the user unless they are explicitly grounded and found in the RAW text. If the raw text does not specify an insurance provider, say you don't know it. Only return information you got directly from the insurance document!
-
-${planContext}${documentContext}
-
-IMPORTANT: You must ALWAYS respond with a JSON object in this exact format (no markdown, no code blocks, just raw JSON):
-{
-  "content": "Your conversational response as a brief paragraph",
-  "structuredResponse": {
-    "recommendation": "Your specific recommendation based on the user's question and their plan",
-    "coverageEstimate": "How their insurance plan covers this, with specific copay/coinsurance details",
-    "expectedCost": { "low": <number>, "high": <number> },
-    "financialImpact": "How this affects their overall financial situation (deductible progress, OOP, HSA)",
-    "assumptions": ["assumption 1", "assumption 2", "assumption 3"],
-    "confidenceLevel": "high" | "medium" | "low",
-    "followUpQuestions": ["question 1", "question 2", "question 3"]
+function safeParse<T>(value: string, fallback: T): T {
+  try {
+    return JSON.parse(value) as T;
+  } catch {
+    return fallback;
   }
 }
 
-Be specific, empathetic, and reference the user's actual plan details. Use real dollar amounts based on their coverage. If you don't have enough information, set confidenceLevel to "low" and explain what's missing in assumptions.`;
+function cleanResponseText(text: string) {
+  let cleanText = text.trim();
+  if (cleanText.startsWith("```json")) {
+    cleanText = cleanText.replace(/^```json\s*/, "").replace(/```\s*$/, "");
+  } else if (cleanText.startsWith("```")) {
+    cleanText = cleanText.replace(/^```\s*/, "").replace(/```\s*$/, "");
+  }
+  return cleanText.trim();
 }
 
-export async function chatWithGemini(
-  userMessage: string,
-  conversationHistory: { role: string; content: string }[]
-): Promise<{
+function normalizeStrategyOption(option: any): StrategyOption {
+  return {
+    label: typeof option?.label === "string" ? option.label : "Unnamed strategy",
+    recommended: Boolean(option?.recommended),
+    feasibility:
+      option?.feasibility === "low" || option?.feasibility === "medium" || option?.feasibility === "high"
+        ? option.feasibility
+        : "medium",
+    monthlyCost: Number(option?.monthlyCost) || 0,
+    totalCost: Number(option?.totalCost) || 0,
+    pros: Array.isArray(option?.pros) ? option.pros.map(String).slice(0, 4) : [],
+    cons: Array.isArray(option?.cons) ? option.cons.map(String).slice(0, 4) : [],
+    requiredActions: Array.isArray(option?.requiredActions) ? option.requiredActions.map(String).slice(0, 4) : [],
+    whyItFitsUser: typeof option?.whyItFitsUser === "string" ? option.whyItFitsUser : "",
+  };
+}
+
+function normalizeStructuredResponse(parsed: any, contextPacket: any): StructuredResponse {
+  const firstBill = contextPacket?.relevantBills?.[0];
+  const fallbackDocs = [
+    ...(firstBill
+      ? [
+          {
+            id: firstBill.documentId || firstBill.billId,
+            type: "medical_bill",
+            label: `${firstBill.providerName || "Medical bill"} bill`,
+          },
+        ]
+      : []),
+    ...(firstBill?.linkedEob
+      ? [
+          {
+            id: firstBill.linkedEob.documentId || firstBill.linkedEob.eobId,
+            type: "eob",
+            label: `${firstBill.providerName || "Linked"} EOB`,
+          },
+        ]
+      : []),
+    ...(contextPacket?.insurance?.summary
+      ? [
+          {
+            id: "insurance-plan",
+            type: "insurance_plan",
+            label: String(contextPacket.insurance.summary.plan || "Insurance plan"),
+          },
+        ]
+      : []),
+    { id: "financial-profile", type: "financial_profile", label: "Financial profile snapshot" },
+  ];
+
+  return {
+    answer: typeof parsed?.answer === "string" ? parsed.answer : typeof parsed?.recommendedStrategy === "string" ? parsed.recommendedStrategy : "",
+    situationSummary: typeof parsed?.situationSummary === "string" ? parsed.situationSummary : "",
+    billAssessment: typeof parsed?.billAssessment === "string" ? parsed.billAssessment : firstBill?.billAssessment || "",
+    insuranceAssessment:
+      typeof parsed?.insuranceAssessment === "string" ? parsed.insuranceAssessment : firstBill?.insuranceAssessment || "",
+    financialAssessment:
+      typeof parsed?.financialAssessment === "string" ? parsed.financialAssessment : firstBill?.financialSummary || "",
+    recommendedStrategy:
+      typeof parsed?.recommendedStrategy === "string"
+        ? parsed.recommendedStrategy
+        : firstBill?.recommendedPrimaryStrategy || "Review the bill before paying",
+    strategyOptions: Array.isArray(parsed?.strategyOptions)
+      ? parsed.strategyOptions.map(normalizeStrategyOption).slice(0, 5)
+      : [],
+    immediateNextSteps: Array.isArray(parsed?.immediateNextSteps) ? parsed.immediateNextSteps.map(String).slice(0, 5) : [],
+    documentsReferenced: Array.isArray(parsed?.documentsReferenced) && parsed.documentsReferenced.length
+      ? parsed.documentsReferenced
+          .map((item: any) => ({
+            id: typeof item?.id === "string" ? item.id : "unknown",
+            type: typeof item?.type === "string" ? item.type : "medical_bill",
+            label: typeof item?.label === "string" ? item.label : "Referenced document",
+          }))
+          .slice(0, 5)
+      : fallbackDocs,
+    assumptions: Array.isArray(parsed?.assumptions) ? parsed.assumptions.map(String).slice(0, 5) : [],
+    missingInformation: Array.isArray(parsed?.missingInformation) ? parsed.missingInformation.map(String).slice(0, 5) : [],
+    confidenceLevel:
+      parsed?.confidenceLevel === "low" || parsed?.confidenceLevel === "medium" || parsed?.confidenceLevel === "high"
+        ? parsed.confidenceLevel
+        : "medium",
+    followUpQuestions: Array.isArray(parsed?.followUpQuestions) ? parsed.followUpQuestions.map(String).slice(0, 4) : [],
+  };
+}
+
+export async function chatWithGemini(params: {
+  userId: string;
+  userMessage: string;
+  conversationHistory: { role: string; content: string }[];
+  explicitBillId?: string;
+}): Promise<{
   content: string;
-  structuredResponse?: {
-    recommendation: string;
-    coverageEstimate: string;
-    expectedCost: { low: number; high: number };
-    financialImpact: string;
-    assumptions: string[];
-    confidenceLevel: "high" | "medium" | "low";
-    followUpQuestions: string[];
+  structuredResponse?: StructuredResponse;
+  contextMeta: {
+    intent: string;
+    referencedBillIds: string[];
+    referencedEobIds: string[];
+    tokenBudgetUsed: number;
+    truncated: boolean;
+    packetVersion: string;
   };
 }> {
-  const systemPrompt = await getHealthcareSystemPrompt();
+  const { userId, userMessage, conversationHistory, explicitBillId } = params;
+  const { packet, metadata } = await buildContextPacket({
+    userId,
+    userMessage,
+    conversationHistory,
+    explicitBillId,
+  });
 
-  // Build messages for OpenAI
-  const messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [
-    { role: "system", content: systemPrompt },
-    ...conversationHistory.map((msg) => ({
-      role: msg.role as "user" | "assistant",
-      content: msg.content,
-    })),
-    { role: "user" as const, content: userMessage },
-  ];
+  const systemPrompt = buildMedicalFinancialAdvisorPrompt(packet);
 
   try {
     const completion = await openai.chat.completions.create({
       model: "gpt-4o-mini",
-      messages,
-      temperature: 0.7,
-      max_tokens: 1500,
+      temperature: 0.2,
+      response_format: { type: "json_object" },
+      max_tokens: 1600,
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: userMessage },
+      ],
     });
 
-    const text = completion.choices[0]?.message?.content || "";
+    const text = completion.choices[0]?.message?.content || "{}";
+    const parsed = safeParse<any>(cleanResponseText(text), {});
+    const normalizedStructured = normalizeStructuredResponse(parsed.structuredResponse || parsed, packet);
+    const content =
+      typeof parsed?.content === "string" && parsed.content.trim()
+        ? parsed.content
+        : normalizedStructured.answer || normalizedStructured.recommendedStrategy;
 
-    // Try to parse JSON from response (handle potential markdown wrapping)
-    let cleanText = text.trim();
-    if (cleanText.startsWith("```json")) {
-      cleanText = cleanText.replace(/^```json\s*/, "").replace(/```\s*$/, "");
-    } else if (cleanText.startsWith("```")) {
-      cleanText = cleanText.replace(/^```\s*/, "").replace(/```\s*$/, "");
-    }
-
-    try {
-      const parsed = JSON.parse(cleanText);
-      return {
-        content: parsed.content || text,
-        structuredResponse: parsed.structuredResponse || undefined,
-      };
-    } catch {
-      // If JSON parsing fails, return as plain text
-      return { content: text };
-    }
+    return {
+      content,
+      structuredResponse: normalizedStructured,
+      contextMeta: metadata,
+    };
   } catch (error) {
     console.error("OpenAI API error:", error);
     return {
-      content: "I'm sorry, I'm having trouble processing your request right now. Please try again.",
+      content: "I could not complete the analysis right now. Review the bill, EOB, and your payment options before making a payment.",
+      structuredResponse: {
+        answer: "I could not complete the analysis right now.",
+        situationSummary: "The assistant could not finish building a reliable bill strategy response.",
+        billAssessment: "Review the bill and confirm the balance before paying.",
+        insuranceAssessment: "Check for a linked EOB or recent claim status update.",
+        financialAssessment: "Use your current cash flow and HSA/FSA availability to avoid overcommitting.",
+        recommendedStrategy: "Validate the bill and request an interest-free payment pause while reviewing.",
+        strategyOptions: [],
+        immediateNextSteps: [
+          "Confirm the medical bill amount and due date.",
+          "Check for a matching EOB or claim status.",
+          "Ask the provider for a payment pause while the bill is reviewed.",
+        ],
+        documentsReferenced: [
+          { id: "financial-profile", type: "financial_profile", label: "Financial profile snapshot" },
+        ],
+        assumptions: [],
+        missingInformation: ["Assistant response generation failed."],
+        confidenceLevel: "low",
+        followUpQuestions: ["Do you want to review this bill against its EOB?", "Do you want a payment-plan recommendation instead?"],
+      },
+      contextMeta: metadata,
     };
   }
 }
 
 export async function analyzeMedicalDocument(text: string, csvHint?: string | null): Promise<any> {
-  const systemPrompt = `You are a medical document analyzer and validator for ClearPath.
-The user has uploaded a healthcare document.
+  const systemPrompt = `You are a medical document analyzer for ClearPath.
 
-STEP 1: CLASSIFICATION & VALIDATION
-Carefully determine if the extracted text contains ANY relevant healthcare or insurance-related information. 
-Only reject the document (isValid: false) if the text is CLEARLY unrelated to healthcare entirely (e.g., a food recipe, academic paper, tax form, or completely blank). If there is ANY plausible insurance/medical content, mark isValid: true.
-If isValid is true, you MUST determine the document type (determinedType). It must be EXACTLY ONE of the following three strings:
-- "insurance_plan" (Any plan coverage document, summary of benefits, ID card, insurance terms/rules)
-- "medical_bill" (An invoice, hospital bill, or statement showing charges for a medical service rendered)
-- "eob" (An Explanation of Benefits from an insurer showing what was claimed and patient responsibility)
+Classify the uploaded content into exactly one of:
+- "insurance_plan"
+- "medical_bill"
+- "eob"
 
-${csvHint ? `CRITICAL SYSTEM INSTRUCTION: The uploaded file explicitly had "${csvHint === 'eob' ? 'EOB' : 'Medical Bill'}" in its top-most CSV row. Strongly prefer classifying it as "${csvHint}".` : ""}
+Only reject the document if it is clearly unrelated to healthcare or insurance.
 
-Provide a rejectionReason ONLY if isValid is false. Keep it helpful and friendly.
+${csvHint ? `Strong hint: classify as "${csvHint}" unless the content clearly contradicts that.` : ""}
 
-STEP 2: EXTRACTION
-Based on your determinedType, extract the following:
-If "insurance_plan", you MUST extract these EXACT keys with numerical values (e.g. 50, not "$50"):
-- planName (string, the name of the plan policy)
-- network (string, the name of the insurance network, e.g. "Aetna PPO", "UnitedHealthcare", etc.)
-- deductibleIndiv (number, individual deductible, 0 if not found)
-- deductibleFamily (number, family deductible, 0 if not found)
-- oopMaxIndiv (number, individual out-of-pocket max, 0 if not found)
-- oopMaxFamily (number, family out-of-pocket max, 0 if not found)
-- coinsuranceIn (number, in-network coinsurance percentage, 0 if not found)
-- coinsuranceOut (number, out-of-network coinsurance percentage, 0 if not found)
-- copays (object): MUST include these exact number fields: "primaryCare", "specialist", "urgentCare", "emergencyRoom", "telehealth".
-- pharmacyBenefits (object): MUST include these exact number fields: "generic", "preferred", "nonPreferred", "specialty".
-- coverageRules (array of strings): 3-5 key rules regarding general coverage constraints.
-- exclusions (array of strings): 3-5 key things explicitly NOT covered.
-- priorAuthRequired (array of strings): 3-5 services requiring prior authorization.
+Extraction rules:
 
-For Medical Bill or EOB:
-- providerName
-- dateOfService
-- totalAmount (as a number)
-- patientResponsibility (as a number)
-
-Return ONLY raw JSON in this exact format (no markdown, no code blocks):
-{
-  "isValid": boolean,
-  "determinedType": "insurance_plan" | "medical_bill" | "eob" | null,
-  "rejectionReason": null or "string",
-  "extractedData": { 
-      // ONLY include properties from ABOVE based on document type
+If the type is "insurance_plan", extract:
+- planName
+- network
+- deductibleIndiv
+- deductibleFamily
+- oopMaxIndiv
+- oopMaxFamily
+- coinsuranceIn
+- coinsuranceOut
+- copays { primaryCare, specialist, urgentCare, emergencyRoom, telehealth }
+- pharmacyBenefits {
+    generic,
+    preferred,
+    nonPreferred,
+    specialty,
+    additionalDeductible,
+    mailOrder,
+    notes
   }
-}
-If a numerical value cannot be found, use 0. If rules/exclusions cannot be found, return empty arrays.`;
+- coverageRules
+- exclusions
+- priorAuthRequired
+- appealsRules
+- billingProtectionRules
+- negotiationRelevantRules
+- sourceExcerpts (up to 5 short supporting snippets)
+
+Insurance extraction requirements:
+- Return numbers only for deductible, out-of-pocket max, coinsurance percentages, copays, and pharmacy numeric values.
+- Never return formatted currency strings like "$6,350" or "$500 per Policy Year". Return 6350 and 500.
+- If the text says "80% of preferred allowance", return 80 for coinsuranceIn.
+- If the text says "Maximum out-of-pocket expenses per Policy Year $6,350 / $12,000 per family", return oopMaxIndiv=6350 and oopMaxFamily=12000.
+- If the text says "Prescriptions - additional deductible per fill $30", set pharmacyBenefits.additionalDeductible=30.
+- Treat sections labeled "pharmacy", "prescription", "prescriptions", "prescription drug", or "Rx" as pharmacy-benefit sections.
+- If the plan uses prescription terminology instead of pharmacy terminology, still populate pharmacyBenefits from that section.
+- If a value is not present, use 0 for numeric fields and empty string/empty array for text collections.
+
+If the type is "medical_bill", extract:
+- providerName
+- accountNumber
+- statementDate
+- dueDate
+- dateOfService
+- dateOfServiceStart
+- dateOfServiceEnd
+- totalAmount
+- currentBalance
+- patientResponsibility
+- careType
+- inNetworkStatus
+- lineItems
+- paymentOptions
+- financialAssistance
+- discounts
+- negotiationEligible
+- charityCareEligible
+- installmentPlanAvailable
+- sourceExcerpts (up to 5 short supporting snippets)
+
+If the type is "eob", extract:
+- payerName
+- claimNumber
+- providerName
+- patientName
+- statementDate
+- dateOfService
+- dateOfServiceStart
+- dateOfServiceEnd
+- billedAmount
+- allowedAmount
+- planPaidAmount
+- patientResponsibility
+- deductibleApplied
+- coinsuranceApplied
+- copayApplied
+- nonCoveredAmount
+- outOfNetworkPenalty
+- claimStatus
+- denialReason
+- sourceExcerpts (up to 5 short supporting snippets)
+
+Return ONLY valid JSON:
+{
+  "isValid": true,
+  "determinedType": "insurance_plan",
+  "rejectionReason": null,
+  "extractedData": {}
+}`;
 
   try {
     const completion = await openai.chat.completions.create({
       model: "gpt-4o-mini",
+      temperature: 0.1,
+      response_format: { type: "json_object" },
       messages: [
         { role: "system", content: systemPrompt },
-        { role: "user", content: text },
+        { role: "user", content: text.slice(0, 18000) },
       ],
-      temperature: 0.1,
     });
-    
-    let responseText = completion.choices[0]?.message?.content || "{}";
-    if (responseText.startsWith("\`\`\`json")) {
-      responseText = responseText.replace(/^\`\`\`json\s*/, "").replace(/\`\`\`\s*$/, "");
-    } else if (responseText.startsWith("\`\`\`")) {
-      responseText = responseText.replace(/^\`\`\`\s*/, "").replace(/\`\`\`\s*$/, "");
-    }
 
-    return JSON.parse(responseText.trim());
+    const responseText = completion.choices[0]?.message?.content || "{}";
+    return safeParse<any>(cleanResponseText(responseText), {
+      isValid: false,
+      determinedType: null,
+      rejectionReason: "The analyzer returned invalid JSON.",
+      extractedData: {},
+    });
   } catch (error) {
     console.error("Error analyzing document:", error);
-    return { isValid: false, rejectionReason: "Failed to cleanly parse the document using AI." };
+    return {
+      isValid: false,
+      determinedType: null,
+      rejectionReason: "Failed to cleanly parse the document using AI.",
+      extractedData: {},
+    };
   }
 }
 
