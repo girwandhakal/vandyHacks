@@ -11,8 +11,6 @@ export async function GET() {
       return NextResponse.json({ error: "Data missing" }, { status: 404 });
     }
 
-    const alerts = await prisma.alert.findMany();
-    
     // We get the upcoming reminders for the dashboard
     const upcomingReminders = await prisma.careReminder.findMany({
       where: { status: "upcoming" },
@@ -33,7 +31,6 @@ export async function GET() {
     const aggregatedData = {
       greeting: `Welcome back, ${user.name}`,
       currentMonth,
-      alerts,
       insurance: {
         ...plan,
         deductiblePercent,

@@ -10,7 +10,6 @@ import {
   FileText,
   Calculator,
   GitBranch,
-  Lightbulb,
   Settings,
   Menu,
   X,
@@ -25,7 +24,6 @@ const navItems = [
   { href: "/documents", label: "Documents", icon: FileText },
   { href: "/cost-estimator", label: "Cost Estimator", icon: Calculator },
   { href: "/scenarios", label: "Scenarios", icon: GitBranch },
-  { href: "/insights", label: "Insights", icon: Lightbulb },
   { href: "/settings", label: "Settings", icon: Settings },
 ];
 

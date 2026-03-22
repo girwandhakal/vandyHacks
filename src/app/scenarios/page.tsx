@@ -229,7 +229,7 @@ export default function ScenariosPage() {
                   <p className="text-5xl font-bold text-[#111111] drop-shadow-sm">{scenario.monthlyImpactPercent}%</p>
                   <p className="text-sm text-neutral-500 mt-2">of monthly income</p>
                   <p className="text-xs text-neutral-400 mt-2">
-                    Based on typical payment plan
+                    Based on a 12-month payment plan at {scenario.financingAPR}% APR
                   </p>
                 </div>
               </div>
@@ -261,6 +261,9 @@ export default function ScenariosPage() {
                       <div className="flex-1 mt-1">
                         <h4 className="text-base font-extrabold text-[#111111]">{plan.label}</h4>
                         <p className="text-xs text-accent mt-0.5 font-medium">{plan.duration}</p>
+                        {typeof plan.apr === "number" && (
+                          <p className="text-xs text-neutral-500 mt-1">{plan.apr}% APR</p>
+                        )}
                       </div>
                       {isSelected && <CheckCircle2 size={24} className="text-accent drop-shadow-md" />}
                     </div>

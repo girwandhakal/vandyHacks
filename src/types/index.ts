@@ -166,21 +166,9 @@ export interface PaymentScenario {
   monthlyAmount: number;
   totalCost: number;
   duration: string;
+  apr?: number;
   description: string;
 }
-
-// Insight / recommendation types
-export interface Insight {
-  id: string;
-  title: string;
-  description: string;
-  category: InsightCategory;
-  priority: "high" | "medium" | "low";
-  actionLabel?: string;
-  icon: string;
-}
-
-export type InsightCategory = "savings" | "timing" | "coverage" | "spending" | "network" | "action";
 
 // User / settings types
 export interface UserProfile {
@@ -207,26 +195,3 @@ export interface UserPreferences {
   currency: string;
 }
 
-// Dashboard types
-export interface DashboardAlert {
-  id: string;
-  title: string;
-  description: string;
-  type: "info" | "warning" | "success" | "action";
-  actionLabel?: string;
-}
-
-export interface QuickAction {
-  id: string;
-  label: string;
-  icon: string;
-  href: string;
-}
-
-export interface CareReminder {
-  id: string;
-  title: string;
-  date: string;
-  type: string;
-  status: "upcoming" | "overdue" | "completed";
-}

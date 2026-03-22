@@ -88,16 +88,6 @@ async function main() {
   });
   console.log("  ✅ Insurance plan created");
 
-  // --- Alerts ---
-  await prisma.alert.createMany({
-    data: [
-      { id: "alert-1", title: "Deductible Progress", description: "You've met 67% of your individual deductible. Consider scheduling deferred care.", type: "info", actionLabel: "View details" },
-      { id: "alert-2", title: "New EOB Available", description: "An Explanation of Benefits from your Feb 28 visit is ready to review.", type: "action", actionLabel: "Review now" },
-      { id: "alert-3", title: "Potential Savings Found", description: "Telehealth could save you $45 on your upcoming dermatology consultation.", type: "success", actionLabel: "Compare options" },
-    ],
-  });
-  console.log("  ✅ Alerts created");
-
   // --- Care Reminders ---
   await prisma.careReminder.createMany({
     data: [
@@ -227,21 +217,6 @@ async function main() {
   });
   console.log("  ✅ Conversation + messages created");
 
-  // --- Insights ---
-  await prisma.insight.createMany({
-    data: [
-      { id: "ins-1", title: "You've met 67% of your deductible", description: "You're on track to meet your full deductible by Q3. Consider scheduling deferred procedures now to maximize insurance coverage this year.", category: "timing", priority: "high", actionLabel: "View deductible progress", icon: "TrendingUp" },
-      { id: "ins-2", title: "Telehealth saves on low-acuity visits", description: "For your upcoming dermatology consultation, telehealth could save you $35 compared to an in-office visit with similar outcomes.", category: "savings", priority: "high", actionLabel: "Compare options", icon: "DollarSign" },
-      { id: "ins-3", title: "Use HSA funds before year-end", description: "Your HSA balance of $1,850 rolls over, but consider using it for planned expenses to reduce taxable income impact now.", category: "savings", priority: "medium", actionLabel: "View HSA details", icon: "Wallet" },
-      { id: "ins-4", title: "Preventive care is 100% covered", description: "Your annual physical, flu shot, and standard screenings are fully covered with no copay. Schedule before Q2.", category: "coverage", priority: "medium", actionLabel: "Schedule care", icon: "ShieldCheck" },
-      { id: "ins-5", title: "Medical spending trending up", description: "Your monthly healthcare spending increased 12% compared to last quarter. This is primarily driven by specialist visits.", category: "spending", priority: "low", actionLabel: "View spending trend", icon: "BarChart3" },
-      { id: "ins-6", title: "Verify provider network before booking", description: "The specialist your doctor referred you to may be out-of-network. Verify to avoid surprise costs up to 40% more.", category: "network", priority: "high", actionLabel: "Check network status", icon: "AlertTriangle" },
-      { id: "ins-7", title: "Prior authorization needed for MRI", description: "Your plan requires prior authorization for advanced imaging. Request this from your doctor to avoid claim denial.", category: "action", priority: "high", actionLabel: "Learn more", icon: "ClipboardCheck" },
-      { id: "ins-8", title: "Mail-order Rx saves on refills", description: "Switching your Lisinopril to mail-order pharmacy (90-day supply) could save $15/quarter compared to retail pharmacy.", category: "savings", priority: "low", actionLabel: "Compare pharmacy options", icon: "Pill" },
-    ],
-  });
-  console.log("  ✅ Insights created");
-
   // --- Scenario ---
   await prisma.scenario.create({
     data: {
@@ -254,16 +229,14 @@ async function main() {
       hsaAvailable: 1850,
       hsaRecommended: 1850,
       paymentPlanMonths: 12,
-      monthlyPayment: 121,
-      financingAPR: 9.9,
-      financingMonthly: 143,
-      monthlyImpactPercent: 4.2,
+      monthlyPayment: 290.12,
+      financingAPR: 10,
+      financingMonthly: 566.15,
+      monthlyImpactPercent: 4.84,
       financialStrainLevel: "moderate",
       paymentScenarios: JSON.stringify([
-        { id: "ps-1", label: "Pay with HSA + Monthly Plan", monthlyAmount: 121, totalCost: 3300, duration: "12 months", description: "Use $1,850 from HSA, then pay $121/mo for 12 months. No interest." },
-        { id: "ps-2", label: "Full HSA + Shorter Plan", monthlyAmount: 242, totalCost: 3300, duration: "6 months", description: "Use $1,850 from HSA, then pay $242/mo for 6 months. Fastest payoff." },
-        { id: "ps-3", label: "Medical Financing", monthlyAmount: 143, totalCost: 3630, duration: "24 months", description: "Finance full amount at 9.9% APR. Total cost is $330 more but lower monthly payments." },
-        { id: "ps-4", label: "Pay in Full", monthlyAmount: 3300, totalCost: 3300, duration: "Immediate", description: "Pay entire balance upfront. May be able to negotiate 5-10% discount." },
+        { id: "ps-6", label: "6-Month Payment Plan", monthlyAmount: 566.15, totalCost: 3396.9, duration: "6 months", apr: 10, description: "Spread the full estimated out-of-pocket amount over 6 months at a fixed 10% APR." },
+        { id: "ps-12", label: "12-Month Payment Plan", monthlyAmount: 290.12, totalCost: 3481.44, duration: "12 months", apr: 10, description: "Lower the monthly bill by stretching the same balance across 12 months at a fixed 10% APR." },
       ]),
     },
   });
