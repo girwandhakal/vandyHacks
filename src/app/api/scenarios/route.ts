@@ -3,7 +3,7 @@ import { prisma } from "@/lib/db";
 import { procedurePricing } from "@/lib/pricing";
 import { HSA_BALANCE } from "@/lib/mock/connected-accounts";
 import { DEFAULT_FINANCIAL_USER_ID } from "@/lib/plaid/default-user";
- 
+
 const DEFAULT_FINANCING_APR = 10;
 
 function roundMoney(value: number) {

@@ -4,15 +4,18 @@ import { buildDummyTransactions } from "@/lib/mock/connected-accounts";
 
 type Params = { params: { id: string } };
 
-export async function GET(_request: Request, { params }: Params) {
+type RouteContext = { params: Promise<{ id: string }> };
+
+export async function GET(_request: Request, { params }: RouteContext) {
   try {
+    const { id } = await params;
     const user = await prisma.user.findFirst();
     if (!user) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
     const account = await prisma.connectedAccount.findFirst({
-      where: { id: params.id, userId: user.id },
+      where: { id, userId: user.id },
     });
     if (!account) {
       return NextResponse.json({ error: "Account not found" }, { status: 404 });

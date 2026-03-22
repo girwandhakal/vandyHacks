@@ -194,4 +194,3 @@ export interface UserPreferences {
   darkMode: boolean;
   currency: string;
 }
-
