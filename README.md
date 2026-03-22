@@ -6,11 +6,13 @@ A premium healthcare cost and insurance guidance app built for VandyHacks. Helps
 
 ```bash
 # 1. Install dependencies
-npm install
+# IMPORTANT: Use --legacy-peer-deps (or --force) to prevent installation errors
+# caused by peer dependency mismatches with Next.js 15 / React 19.
+npm install --legacy-peer-deps
 
 # 2. Set up environment variables
 cp .env.example .env
-# Then edit .env and add your real OPENAI_API_KEY
+# Then edit .env and add your real OPENAI_API_KEY for the AI Assistant feature
 
 # 3. Set up the database
 npm run db:push    # Create the SQLite database from the schema

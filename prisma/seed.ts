@@ -43,12 +43,12 @@ async function main() {
       planYearEnd: "2026-12-31",
       deductibleIndiv: 2000,
       deductibleFamily: 4000,
-      deductibleMetIndiv: 1340,
-      deductibleMetFamily: 2100,
+      deductibleMetIndiv: 0,
+      deductibleMetFamily: 0,
       oopMaxIndiv: 6500,
       oopMaxFamily: 13000,
-      oopSpentIndiv: 2180,
-      oopSpentFamily: 3600,
+      oopSpentIndiv: 0,
+      oopSpentFamily: 0,
       coinsuranceIn: 80,
       coinsuranceOut: 60,
       copays: JSON.stringify({
@@ -146,6 +146,28 @@ async function main() {
       {
         id: "doc-5", name: "Prescription_Summary_Q1.pdf", type: "medical_bill", status: "error",
         fileSize: "310 KB", uploadedAt: new Date("2026-03-20T08:00:00Z"),
+      },
+      {
+        id: "doc-6", name: "Urgent_Care_Bill.pdf", type: "medical_bill", status: "ready",
+        fileSize: "1.2 MB", uploadedAt: new Date("2026-03-22T09:00:00Z"),
+        extractedData: JSON.stringify({ totalAmount: 40, patientResponsibility: 40 }),
+      },
+      {
+        id: "doc-7", name: "EOB_Urgent_Care.pdf", type: "eob", status: "ready",
+        linkedBillId: "doc-6",
+        fileSize: "600 KB", uploadedAt: new Date("2026-03-23T10:00:00Z"),
+        extractedData: JSON.stringify({ patientResponsibility: 40, deductibleApplied: 40 }),
+      },
+      {
+        id: "doc-8", name: "Surgery_Center_Bill.pdf", type: "medical_bill", status: "ready",
+        fileSize: "3.5 MB", uploadedAt: new Date("2026-03-24T11:00:00Z"),
+        extractedData: JSON.stringify({ totalAmount: 2500, patientResponsibility: 2500 }),
+      },
+      {
+        id: "doc-9", name: "EOB_Surgery_Center.pdf", type: "eob", status: "ready",
+        linkedBillId: "doc-8",
+        fileSize: "1.0 MB", uploadedAt: new Date("2026-03-25T14:30:00Z"),
+        extractedData: JSON.stringify({ patientResponsibility: 2500, deductibleApplied: 2500 }),
       },
     ],
   });

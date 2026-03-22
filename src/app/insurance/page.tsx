@@ -122,6 +122,9 @@ export default function InsurancePage() {
               {formatCurrency(plan.deductibleMetIndiv)} / {formatCurrency(plan.deductibleIndiv)}
             </p>
             <StatusBadge label={`${Math.round(deductiblePercent)}% met`} variant="accent" className="mt-2" />
+            {plan.deductibleMetIndiv >= plan.deductibleIndiv && (
+              <p className="text-xs text-success mt-3 font-medium text-center px-4">Insurance is now paying {plan.coinsuranceIn || 80}% for in-network care!</p>
+            )}
           </div>
           <div className="card-base flex flex-col items-center py-6">
             <ProgressRing value={plan.oopSpentIndiv} max={plan.oopMaxIndiv} size={110} />
@@ -130,6 +133,9 @@ export default function InsurancePage() {
               {formatCurrency(plan.oopSpentIndiv)} / {formatCurrency(plan.oopMaxIndiv)}
             </p>
             <StatusBadge label={`${Math.round(oopPercent)}% used`} variant="accent" className="mt-2" />
+            {plan.oopSpentIndiv >= plan.oopMaxIndiv && (
+              <p className="text-xs text-success mt-3 font-medium text-center px-4">Insurance is covering all until end of policy year!</p>
+            )}
           </div>
           <div className="card-base flex flex-col items-center py-6">
             <ProgressRing value={planDaysPassed} max={planTotalDays} size={110} />
