@@ -19,8 +19,8 @@ export async function POST(request: Request) {
 
     const copays = JSON.parse(plan.copays || "{}");
     const coinsuranceRate = inNetwork ? plan.coinsuranceIn : plan.coinsuranceOut;
-    const remainingDeductible = plan.deductibleIndiv - plan.deductibleMetIndiv;
-    const remainingOOP = plan.oopMaxIndiv - plan.oopSpentIndiv;
+    const remainingDeductible = Math.max(0, plan.deductibleIndiv - plan.deductibleMetIndiv);
+    const remainingOOP = Math.max(0, plan.oopMaxIndiv - plan.oopSpentIndiv);
 
     const options = Object.entries(pricing.settings).map(([settingKey, baseCost]) => {
       let userResponsibility = 0;
@@ -35,7 +35,9 @@ export async function POST(request: Request) {
         telehealth: copays.telehealth,
       };
 
-      const copay = copayMap[settingKey] || 0;
+      // Typical plans only apply flat copays for in-network care.
+      // Out-of-network care relies on coinsurance and deductible.
+      const copay = inNetwork ? (copayMap[settingKey] || 0) : 0;
 
       if (copay > 0 && baseCost > 0) {
         userResponsibility = copay;
@@ -48,8 +50,9 @@ export async function POST(request: Request) {
         } else {
           userResponsibility = remainingDeductible;
           costAfterDeductible = baseCost - remainingDeductible;
-          const coinsuranceAmount = costAfterDeductible * (coinsuranceRate / 100);
-          userResponsibility += coinsuranceAmount;
+          // coinsuranceRate is what the insurance pays (e.g., 80%), so user pays the remaining (e.g., 20%)
+          const userCoinsuranceAmount = costAfterDeductible * ((100 - coinsuranceRate) / 100);
+          userResponsibility += userCoinsuranceAmount;
         }
         insurancePortion = baseCost - userResponsibility;
       }

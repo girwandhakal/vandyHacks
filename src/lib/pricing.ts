@@ -104,6 +104,18 @@ export const careSettingMeta: Record<string, { label: string; waitTime: string; 
     bestFor: "Life-threatening emergencies, severe symptoms",
     icon: "Siren",
   },
+  specialist: {
+    label: "Specialist",
+    waitTime: "1-2 weeks",
+    bestFor: "Targeted diagnosis, chronic condition management",
+    icon: "Stethoscope",
+  },
+  hospital: {
+    label: "Hospital",
+    waitTime: "Varies",
+    bestFor: "Inpatient procedures, complex diagnostics, surgery",
+    icon: "Siren",
+  },
 };
 
 // Visit types list (for dropdowns)
