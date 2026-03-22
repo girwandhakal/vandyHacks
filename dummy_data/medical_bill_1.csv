@@ -1,0 +1,4 @@
+Medical Bill
+Patient Name,Date of Service,Provider,Description,Procedure Code,Total Charged
+Jane Smith,2026-04-10,City Care Clinic,Urgent Care Visit,99214,$250.00
+Jane Smith,2026-04-10,City Care Clinic,Blood Test Panel,80050,$75.00
