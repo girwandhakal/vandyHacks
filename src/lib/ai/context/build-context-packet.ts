@@ -38,6 +38,24 @@ function formatMoney(value?: number | null) {
   return `$${toNumber(value).toFixed(2)}`;
 }
 
+function readFinancialHealthFromAiContext(value: string | null | undefined) {
+  const parsed = safeParse<{
+    financial_health?: {
+      monthly_income?: unknown;
+      free_cash_flow?: unknown;
+      affordability_risk?: unknown;
+      savings_buffer?: unknown;
+    };
+  }>(value, {});
+
+  return {
+    monthlyIncome: toNumber(parsed.financial_health?.monthly_income),
+    freeCashFlow: toNumber(parsed.financial_health?.free_cash_flow),
+    affordabilityRisk: typeof parsed.financial_health?.affordability_risk === "string" ? parsed.financial_health.affordability_risk : null,
+    savingsBuffer: toNumber(parsed.financial_health?.savings_buffer),
+  };
+}
+
 function normalizeProviderName(text?: string | null) {
   return text?.toLowerCase().replace(/\s+/g, " ").trim() || "";
 }
@@ -111,6 +129,12 @@ async function buildFinancialSnapshot(userId: string) {
     where: { userId },
     orderBy: { asOfDate: "desc" },
   });
+  const latestAiContext = await prisma.aIContextSnapshot.findFirst({
+    where: { userId },
+    orderBy: { createdAt: "desc" },
+    select: { contextJson: true },
+  });
+  const aiFinancialHealth = readFinancialHealthFromAiContext(latestAiContext?.contextJson);
 
   if (!snapshot) {
     const accounts = await prisma.plaidAccount.findMany({ where: { userId } });
@@ -145,6 +169,7 @@ async function buildFinancialSnapshot(userId: string) {
     const fsaBalance = accounts
       .filter((account) => `${account.name} ${account.officialName || ""}`.toLowerCase().includes("fsa"))
       .reduce((sum, account) => sum + (account.availableBalance ?? account.currentBalance ?? 0), 0);
+    const liquidSavingsBuffer = Math.max(checkingLiquidity + hsaBalance + fsaBalance, aiFinancialHealth.savingsBuffer);
 
     const freeCashFlow = Math.max(0, income - fixedCosts - variableCosts - debtPayments);
     snapshot = await prisma.financialProfileSnapshot.create({
@@ -163,12 +188,12 @@ async function buildFinancialSnapshot(userId: string) {
           variableCosts,
           debtPayments,
           medicalSpend,
-          savingsBuffer: checkingLiquidity + hsaBalance + fsaBalance,
+          savingsBuffer: liquidSavingsBuffer,
         }),
         checkingLiquidity,
         hsaBalance,
         fsaBalance,
-        availableMedicalPaymentCapacityNow: checkingLiquidity + hsaBalance + fsaBalance,
+        availableMedicalPaymentCapacityNow: liquidSavingsBuffer,
         availableMedicalPaymentCapacityMonthly: freeCashFlow,
         monthlyEssentialSpend: fixedCosts,
         monthlyDiscretionarySpend: variableCosts,
@@ -182,31 +207,39 @@ async function buildFinancialSnapshot(userId: string) {
       toNumber(snapshot.monthlyFixedCosts) -
       toNumber(snapshot.monthlyVariableCosts) -
       toNumber(snapshot.monthlyDebtPayments);
+  const storedLiquidBalances = toNumber(snapshot.checkingLiquidity) + toNumber(snapshot.hsaBalance) + toNumber(snapshot.fsaBalance);
+  const effectiveSavingsBuffer = Math.max(
+    storedLiquidBalances,
+    toNumber(snapshot.availableMedicalPaymentCapacityNow),
+    aiFinancialHealth.savingsBuffer,
+  );
 
   return {
     asOfDate: snapshot.asOfDate,
-    monthlyIncomeEstimate: toNumber(snapshot.monthlyIncomeEstimate),
+    monthlyIncomeEstimate: toNumber(snapshot.monthlyIncomeEstimate, aiFinancialHealth.monthlyIncome),
     monthlyFixedCosts: toNumber(snapshot.monthlyFixedCosts),
     monthlyVariableCosts: toNumber(snapshot.monthlyVariableCosts),
     monthlyDebtPayments: toNumber(snapshot.monthlyDebtPayments),
     monthlyMedicalSpend: toNumber(snapshot.monthlyMedicalSpend),
-    freeCashFlow: toNumber(snapshot.freeCashFlow, freeCashFlow),
+    freeCashFlow: toNumber(snapshot.freeCashFlow, Math.max(freeCashFlow, aiFinancialHealth.freeCashFlow)),
     affordabilityRiskLevel:
       snapshot.affordabilityRiskLevel ||
+      aiFinancialHealth.affordabilityRisk ||
       computeAffordabilityRisk({
         incomeEstimate: toNumber(snapshot.monthlyIncomeEstimate),
         fixedCosts: toNumber(snapshot.monthlyFixedCosts),
         variableCosts: toNumber(snapshot.monthlyVariableCosts),
         debtPayments: toNumber(snapshot.monthlyDebtPayments),
         medicalSpend: toNumber(snapshot.monthlyMedicalSpend),
-        savingsBuffer: toNumber(snapshot.checkingLiquidity) + toNumber(snapshot.hsaBalance) + toNumber(snapshot.fsaBalance),
+        savingsBuffer: effectiveSavingsBuffer,
       }),
     checkingLiquidity: toNumber(snapshot.checkingLiquidity),
     hsaBalance: toNumber(snapshot.hsaBalance),
     fsaBalance: toNumber(snapshot.fsaBalance),
+    savingsBuffer: effectiveSavingsBuffer,
     availableMedicalPaymentCapacityNow: toNumber(
       snapshot.availableMedicalPaymentCapacityNow,
-      toNumber(snapshot.checkingLiquidity) + toNumber(snapshot.hsaBalance) + toNumber(snapshot.fsaBalance),
+      effectiveSavingsBuffer,
     ),
     availableMedicalPaymentCapacityMonthly: toNumber(snapshot.availableMedicalPaymentCapacityMonthly, freeCashFlow),
     hardshipIndicators: safeParse<string[]>(snapshot.hardshipIndicatorsJson, []),
@@ -454,10 +487,11 @@ export async function buildContextPacket(params: {
       checkingLiquidity: financial.checkingLiquidity,
       hsaBalance: financial.hsaBalance,
       fsaBalance: financial.fsaBalance,
+      savingsBuffer: financial.savingsBuffer,
       availableMedicalPaymentCapacityNow: financial.availableMedicalPaymentCapacityNow,
       availableMedicalPaymentCapacityMonthly: financial.availableMedicalPaymentCapacityMonthly,
       hardshipIndicators: financial.hardshipIndicators,
-      summary: `Monthly income ${formatMoney(financial.monthlyIncomeEstimate)}, free cash flow ${formatMoney(financial.freeCashFlow)}, liquid medical payment capacity now ${formatMoney(financial.availableMedicalPaymentCapacityNow)}, monthly capacity ${formatMoney(financial.availableMedicalPaymentCapacityMonthly)}.`,
+      summary: `Monthly income ${formatMoney(financial.monthlyIncomeEstimate)}, free cash flow ${formatMoney(financial.freeCashFlow)}, liquid savings or payment capacity now ${formatMoney(financial.availableMedicalPaymentCapacityNow)}, monthly capacity ${formatMoney(financial.availableMedicalPaymentCapacityMonthly)}.`,
     },
     insurance,
     relevantBills,

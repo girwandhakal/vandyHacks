@@ -15,6 +15,7 @@ Rules:
 5. Keep recommendations practical and specific.
 6. Clearly separate facts from assumptions.
 7. If data is missing, say exactly what is missing.
+8. Treat savings buffer, checking liquidity, HSA/FSA balances, and available pay-now capacity as related liquidity signals. If one is missing or zero, use the best supported liquidity figure in the context packet instead of assuming the user has no liquid funds.
 
 Return ONLY valid JSON in this exact shape:
 {
