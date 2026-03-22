@@ -1,12 +1,18 @@
 import { NextResponse } from 'next/server';
 import { plaidClient } from '@/lib/plaid/client';
 import { PrismaClient } from '@prisma/client';
+import {
+  DEFAULT_FINANCIAL_USER_ID,
+  ensureDefaultFinancialUser,
+  resetStoredFinancialData,
+} from '@/lib/plaid/default-user';
 
 const prisma = new PrismaClient();
 
 export async function POST(req: Request) {
   try {
-    const { publicToken, userId } = await req.json();
+    const { publicToken } = await req.json();
+    const userId = DEFAULT_FINANCIAL_USER_ID;
 
     const response = await plaidClient.itemPublicTokenExchange({
       public_token: publicToken,
@@ -28,14 +34,8 @@ export async function POST(req: Request) {
       institutionName = instResponse.data.institution.name;
     }
 
-    // Save item to DB
-    const user = await prisma.user.findUnique({ where: { id: userId } });
-    if (!user) {
-      // For dev/sandbox testing, if user doesn't exist, create a dummy one
-      await prisma.user.create({
-        data: { id: userId, name: 'Test User', email: `${userId}@test.com` }
-      });
-    }
+    await ensureDefaultFinancialUser(prisma);
+    await resetStoredFinancialData(prisma);
 
     await prisma.plaidItem.create({
        data: {

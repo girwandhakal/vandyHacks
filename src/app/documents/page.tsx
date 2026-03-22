@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState, useEffect, useCallback } from "react";
 import { AnimateIn } from "@/components/shared/animate-in";
 import { PageHeader } from "@/components/shared/page-header";
@@ -18,7 +19,8 @@ import {
   Unlink,
   ArchiveRestore,
   Archive,
-  Trash2
+  Trash2,
+  MessageSquareText
 } from "lucide-react";
 
 const statusConfig: Record<string, { label: string; variant: "success" | "warning" | "danger" | "accent"; icon: React.ElementType }> = {
@@ -206,10 +208,22 @@ export default function DocumentsPage() {
                 <p className="font-medium text-charcoal">{formatCurrency(extractedData.totalAmount)}</p>
               </div>
             )}
+            {extractedData.currentBalance !== undefined && (
+              <div>
+                <span className="text-xs text-neutral-400 block mb-0.5">Current Balance</span>
+                <p className="font-medium text-charcoal">{formatCurrency(extractedData.currentBalance)}</p>
+              </div>
+            )}
             {extractedData.patientResponsibility !== undefined && (
               <div>
                 <span className="text-xs text-neutral-400 block mb-0.5">Your Responsibility</span>
                 <p className="font-medium text-accent">{formatCurrency(extractedData.patientResponsibility)}</p>
+              </div>
+            )}
+            {extractedData.dueDate && (
+              <div>
+                <span className="text-xs text-neutral-400 block mb-0.5">Due Date</span>
+                <p className="font-medium text-charcoal">{extractedData.dueDate}</p>
               </div>
             )}
           </div>
@@ -379,6 +393,12 @@ export default function DocumentsPage() {
                           {/* Settle Claim Action */}
                           {claim.bill.status === "ready" && (
                             <div className="mt-6 pt-4 border-t border-neutral-100">
+                               <Link
+                                  href={`/assistant?billId=${encodeURIComponent(claim.bill.id)}&label=${encodeURIComponent(claim.bill.name)}`}
+                                  className="mb-2 w-full flex items-center justify-center gap-2 text-xs font-medium text-accent bg-accent/5 hover:bg-accent/10 py-2 rounded-lg transition-colors"
+                               >
+                                  <MessageSquareText size={14} /> Ask AI About This Bill
+                               </Link>
                                <button 
                                   onClick={() => handleSettle(claim.bill.id)}
                                   disabled={linking}

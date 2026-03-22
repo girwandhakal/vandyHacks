@@ -2,12 +2,18 @@ import { NextResponse } from 'next/server';
 import { plaidClient } from '@/lib/plaid/client';
 import { PrismaClient } from '@prisma/client';
 import { Products } from 'plaid';
+import {
+  DEFAULT_FINANCIAL_USER_ID,
+  ensureDefaultFinancialUser,
+  resetStoredFinancialData,
+} from '@/lib/plaid/default-user';
 
 const prisma = new PrismaClient();
 
 export async function POST(req: Request) {
   try {
-    const { userId, institutionId, overrideUsername = 'user_transactions_dynamic' } = await req.json();
+    const { institutionId, overrideUsername = 'user_transactions_dynamic' } = await req.json();
+    const userId = DEFAULT_FINANCIAL_USER_ID;
 
     const publicTokenResponse = await plaidClient.sandboxPublicTokenCreate({
       institution_id: institutionId || 'ins_109508',
@@ -27,11 +33,8 @@ export async function POST(req: Request) {
     const accessToken = exchangeResponse.data.access_token;
     const itemId = exchangeResponse.data.item_id;
 
-    await prisma.user.upsert({
-      where: { id: userId },
-      update: {},
-      create: { id: userId, name: 'Fake Sandbox User', email: `${userId}@sandbox.test` }
-    });
+    await ensureDefaultFinancialUser(prisma);
+    await resetStoredFinancialData(prisma);
 
     await prisma.plaidItem.create({
       data: {

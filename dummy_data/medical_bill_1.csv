@@ -1,4 +1,5 @@
 Medical Bill
 Patient Name,Date of Service,Provider,Description,Procedure Code,Total Charged
-Jane Smith,2026-04-10,City Care Clinic,Urgent Care Visit,99214,$250.00
-Jane Smith,2026-04-10,City Care Clinic,Blood Test Panel,80050,$75.00
+Emily Carter,2026-04-18,Riverbend Urgent Care,Urgent Care Evaluation and Management,99214,$45.00
+Emily Carter,2026-04-18,Riverbend Urgent Care,Chest X-Ray 2 Views,71046,$24.00
+Emily Carter,2026-04-18,Riverbend Urgent Care,Rapid Strep and Flu Testing,87880,$15.00

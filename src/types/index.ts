@@ -73,17 +73,51 @@ export interface Message {
   role: "user" | "assistant";
   content: string;
   structuredResponse?: StructuredResponse;
+  contextMeta?: AssistantContextMeta;
   timestamp: string;
 }
 
 export interface StructuredResponse {
-  recommendation: string;
-  coverageEstimate: string;
-  expectedCost: { low: number; high: number };
-  financialImpact: string;
+  answer: string;
+  situationSummary: string;
+  billAssessment: string;
+  insuranceAssessment: string;
+  financialAssessment: string;
+  recommendedStrategy: string;
+  strategyOptions: StrategyOption[];
+  immediateNextSteps: string[];
+  documentsReferenced: ReferencedDocument[];
   assumptions: string[];
+  missingInformation: string[];
   confidenceLevel: "high" | "medium" | "low";
   followUpQuestions: string[];
+}
+
+export interface StrategyOption {
+  label: string;
+  recommended: boolean;
+  feasibility: "high" | "medium" | "low";
+  monthlyCost: number;
+  totalCost: number;
+  pros: string[];
+  cons: string[];
+  requiredActions: string[];
+  whyItFitsUser: string;
+}
+
+export interface ReferencedDocument {
+  id: string;
+  type: "insurance_plan" | "medical_bill" | "eob" | "estimate" | "financial_profile";
+  label: string;
+}
+
+export interface AssistantContextMeta {
+  intent?: string;
+  referencedBillIds?: string[];
+  referencedEobIds?: string[];
+  tokenBudgetUsed?: number;
+  truncated?: boolean;
+  packetVersion?: string;
 }
 
 // Document types
