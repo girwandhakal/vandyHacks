@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { AnimateIn } from "@/components/shared/animate-in";
 import { PageHeader } from "@/components/shared/page-header";
@@ -7,14 +8,7 @@ import { StatCard } from "@/components/shared/stat-card";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { ProgressRing } from "@/components/shared/progress-ring";
 import { formatCurrency } from "@/lib/utils";
-import { mockInsurancePlan } from "@/lib/mock/insurance";
-import {
-  mockAlerts,
-  mockQuickActions,
-  mockReminders,
-  mockFinancialSnapshot,
-  mockRecentActivity,
-} from "@/lib/mock/dashboard";
+import { Skeleton } from "@/components/shared/skeleton";
 import {
   Calculator,
   MessageSquare,
@@ -41,23 +35,68 @@ const iconMap: Record<string, React.ElementType> = {
 };
 
 export default function DashboardPage() {
-  const plan = mockInsurancePlan;
-  const deductiblePercent = (plan.deductibleMet.individual / plan.deductible.individual) * 100;
-  const oopPercent = (plan.outOfPocketSpent.individual / plan.outOfPocketMax.individual) * 100;
+  const [data, setData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch('/api/dashboard')
+      .then(res => res.json())
+      .then(json => {
+        setData(json);
+        setLoading(false);
+      })
+      .catch(err => {
+        console.error("Failed to fetch dashboard data:", err);
+        setLoading(false);
+      });
+  }, []);
+
+  if (loading || !data) {
+    return (
+      <div className="page-container space-y-8">
+        <Skeleton className="h-20 w-3/4" />
+        <div className="space-y-4">
+          <Skeleton className="h-16 w-full" />
+          <Skeleton className="h-16 w-full" />
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <Skeleton className="h-40 w-full" />
+          <Skeleton className="h-40 w-full" />
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <Skeleton className="h-24 w-full" />
+          <Skeleton className="h-24 w-full" />
+          <Skeleton className="h-24 w-full" />
+          <Skeleton className="h-24 w-full" />
+        </div>
+      </div>
+    );
+  }
+
+  const { greeting, currentMonth, alerts, insurance: plan, financialSnapshot, upcomingReminders, recentActivity } = data;
+
+  const mockQuickActions = [
+    { id: "1", label: "Estimate Cost", icon: "Calculator", href: "/cost-estimator" },
+    { id: "2", label: "Ask AI", icon: "MessageSquare", href: "/assistant" },
+    { id: "3", label: "Upload Bill", icon: "Upload", href: "/documents" },
+    { id: "4", label: "Coverage", icon: "Shield", href: "/insurance" },
+    { id: "5", label: "Scenarios", icon: "GitBranch", href: "/scenarios" },
+    { id: "6", label: "Insights", icon: "Lightbulb", href: "/insights" },
+  ];
 
   return (
     <div className="page-container">
       <AnimateIn>
         <PageHeader
-          title="Good afternoon, Alex"
-          subtitle="Here's your healthcare financial snapshot for March 2026"
+          title={greeting}
+          subtitle={`Here's your healthcare financial snapshot for ${currentMonth}`}
         />
       </AnimateIn>
 
       {/* Alerts */}
       <AnimateIn delay={0.05}>
         <div className="space-y-2 mb-8">
-          {mockAlerts.map((alert) => (
+          {alerts.map((alert: any) => (
             <div
               key={alert.id}
               className="flex items-start gap-3 p-4 rounded-xl border border-neutral-200 bg-white"
@@ -87,25 +126,25 @@ export default function DashboardPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
           <div className="card-base flex items-center gap-6">
             <ProgressRing
-              value={plan.deductibleMet.individual}
-              max={plan.deductible.individual}
+              value={plan.deductibleMetIndiv}
+              max={plan.deductibleIndiv}
               size={100}
               strokeWidth={8}
             />
             <div>
               <p className="text-sm text-neutral-500">Individual Deductible</p>
               <p className="text-xl font-semibold">
-                {formatCurrency(plan.deductibleMet.individual)}{" "}
+                {formatCurrency(plan.deductibleMetIndiv)}{" "}
                 <span className="text-sm font-normal text-neutral-400">
-                  of {formatCurrency(plan.deductible.individual)}
+                  of {formatCurrency(plan.deductibleIndiv)}
                 </span>
               </p>
               <p className="text-xs text-neutral-400 mt-1">
-                {formatCurrency(plan.deductible.individual - plan.deductibleMet.individual)} remaining
+                {formatCurrency(plan.deductibleIndiv - plan.deductibleMetIndiv)} remaining
               </p>
               <StatusBadge
-                label={`${Math.round(deductiblePercent)}% met`}
-                variant={deductiblePercent >= 80 ? "danger" : deductiblePercent >= 50 ? "warning" : "accent"}
+                label={`${plan.deductiblePercent}% met`}
+                variant={plan.deductiblePercent >= 80 ? "danger" : plan.deductiblePercent >= 50 ? "warning" : "accent"}
                 className="mt-2"
               />
             </div>
@@ -113,25 +152,25 @@ export default function DashboardPage() {
 
           <div className="card-base flex items-center gap-6">
             <ProgressRing
-              value={plan.outOfPocketSpent.individual}
-              max={plan.outOfPocketMax.individual}
+              value={plan.oopSpentIndiv}
+              max={plan.oopMaxIndiv}
               size={100}
               strokeWidth={8}
             />
             <div>
               <p className="text-sm text-neutral-500">Out-of-Pocket Max</p>
               <p className="text-xl font-semibold">
-                {formatCurrency(plan.outOfPocketSpent.individual)}{" "}
+                {formatCurrency(plan.oopSpentIndiv)}{" "}
                 <span className="text-sm font-normal text-neutral-400">
-                  of {formatCurrency(plan.outOfPocketMax.individual)}
+                  of {formatCurrency(plan.oopMaxIndiv)}
                 </span>
               </p>
               <p className="text-xs text-neutral-400 mt-1">
-                {formatCurrency(plan.outOfPocketMax.individual - plan.outOfPocketSpent.individual)} remaining
+                {formatCurrency(plan.oopMaxIndiv - plan.oopSpentIndiv)} remaining
               </p>
               <StatusBadge
-                label={`${Math.round(oopPercent)}% used`}
-                variant={oopPercent >= 80 ? "danger" : oopPercent >= 50 ? "warning" : "accent"}
+                label={`${plan.oopPercent}% used`}
+                variant={plan.oopPercent >= 80 ? "danger" : plan.oopPercent >= 50 ? "warning" : "accent"}
                 className="mt-2"
               />
             </div>
@@ -143,27 +182,28 @@ export default function DashboardPage() {
       <AnimateIn delay={0.15}>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
           <StatCard
-            label="Monthly Spending"
-            value={formatCurrency(mockFinancialSnapshot.monthlySpending)}
-            subtitle={`of ${formatCurrency(mockFinancialSnapshot.monthlyBudget)} budget`}
-            trend={{ direction: "up", value: `${mockFinancialSnapshot.trendPercent}%` }}
-          />
-          <StatCard
             label="Year-to-Date"
-            value={formatCurrency(mockFinancialSnapshot.ytdSpending)}
+            value={formatCurrency(financialSnapshot.ytdSpending)}
             subtitle="Total out-of-pocket"
+            trend={{ direction: "up", value: "2%" }}
           />
           <StatCard
             label="HSA Balance"
-            value={formatCurrency(mockFinancialSnapshot.hsaBalance)}
+            value={formatCurrency(financialSnapshot.hsaBalance)}
             subtitle="Available funds"
             icon={<Wallet size={18} />}
           />
           <StatCard
-            label="Savings Found"
-            value={String(mockFinancialSnapshot.savingsOpportunities)}
-            subtitle="Opportunities available"
-            icon={<Sparkles size={18} />}
+            label="Care Reminders"
+            value={String(upcomingReminders.length)}
+            subtitle="Actionable items"
+            icon={<Calendar size={18} />}
+          />
+          <StatCard
+            label="Recent Activity"
+            value={String(recentActivity.length)}
+            subtitle="In the last 30 days"
+            icon={<Clock size={18} />}
           />
         </div>
       </AnimateIn>
@@ -218,34 +258,38 @@ export default function DashboardPage() {
           {/* Upcoming Care */}
           <div className="card-base">
             <h3 className="section-title mb-4">Upcoming Care</h3>
-            <div className="space-y-3">
-              {mockReminders.map((reminder) => (
-                <div key={reminder.id} className="flex items-start gap-3">
-                  <div className="mt-0.5">
-                    {reminder.status === "completed" && <CheckCircle2 size={16} className="text-success" />}
-                    {reminder.status === "overdue" && <AlertCircle size={16} className="text-danger" />}
-                    {reminder.status === "upcoming" && <Calendar size={16} className="text-neutral-400" />}
+            {upcomingReminders.length === 0 ? (
+              <p className="text-sm text-neutral-500">No upcoming care reminders.</p>
+            ) : (
+              <div className="space-y-3">
+                {upcomingReminders.map((reminder: any) => (
+                  <div key={reminder.id} className="flex items-start gap-3">
+                    <div className="mt-0.5">
+                      {reminder.status === "completed" && <CheckCircle2 size={16} className="text-success" />}
+                      {reminder.status === "overdue" && <AlertCircle size={16} className="text-danger" />}
+                      {reminder.status === "upcoming" && <Calendar size={16} className="text-neutral-400" />}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-charcoal">{reminder.title}</p>
+                      <p className="text-xs text-neutral-400">{reminder.type}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-xs text-neutral-500">
+                        {new Date(reminder.date).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                      </p>
+                      <StatusBadge
+                        label={reminder.status}
+                        variant={
+                          reminder.status === "completed" ? "success" :
+                          reminder.status === "overdue" ? "danger" : "neutral"
+                        }
+                        className="mt-1"
+                      />
+                    </div>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-charcoal">{reminder.title}</p>
-                    <p className="text-xs text-neutral-400">{reminder.type}</p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-xs text-neutral-500">
-                      {new Date(reminder.date).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
-                    </p>
-                    <StatusBadge
-                      label={reminder.status}
-                      variant={
-                        reminder.status === "completed" ? "success" :
-                        reminder.status === "overdue" ? "danger" : "neutral"
-                      }
-                      className="mt-1"
-                    />
-                  </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </AnimateIn>
@@ -256,24 +300,28 @@ export default function DashboardPage() {
           {/* Recent Activity */}
           <div className="card-base">
             <h3 className="section-title mb-4">Recent Activity</h3>
-            <div className="space-y-3">
-              {mockRecentActivity.map((activity) => {
-                const Icon = iconMap[activity.icon] || FileText;
-                return (
-                  <div key={activity.id} className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-neutral-50 flex items-center justify-center">
-                      <Icon size={14} className="text-neutral-400" />
+            {recentActivity.length === 0 ? (
+              <p className="text-sm text-neutral-500">No recent activity.</p>
+            ) : (
+              <div className="space-y-3">
+                {recentActivity.map((activity: any) => {
+                  const Icon = iconMap[activity.icon] || FileText;
+                  return (
+                    <div key={activity.id} className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-lg bg-neutral-50 flex items-center justify-center">
+                        <Icon size={14} className="text-neutral-400" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm text-charcoal truncate">{activity.label}</p>
+                      </div>
+                      <span className="text-xs text-neutral-400 whitespace-nowrap flex items-center gap-1">
+                        <Clock size={12} /> {activity.time}
+                      </span>
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm text-charcoal truncate">{activity.label}</p>
-                    </div>
-                    <span className="text-xs text-neutral-400 whitespace-nowrap flex items-center gap-1">
-                      <Clock size={12} /> {activity.time}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
 
           {/* Insurance Status */}
@@ -293,15 +341,19 @@ export default function DashboardPage() {
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-sm text-neutral-500">Coinsurance</span>
-                <span className="text-sm font-medium">{plan.coinsurance.inNetwork}% in-network</span>
+                <span className="text-sm font-medium">{plan.coinsuranceIn}% in-network</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-sm text-neutral-500">PCP Copay</span>
-                <span className="text-sm font-medium">{formatCurrency(plan.copays.primaryCare)}</span>
+                <span className="text-sm font-medium">
+                  {formatCurrency(JSON.parse(plan.copays || "{}").primaryCare || 0)}
+                </span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-sm text-neutral-500">Telehealth</span>
-                <span className="text-sm font-medium">{formatCurrency(plan.copays.telehealth)}</span>
+                <span className="text-sm font-medium">
+                  {formatCurrency(JSON.parse(plan.copays || "{}").telehealth || 0)}
+                </span>
               </div>
             </div>
           </Link>

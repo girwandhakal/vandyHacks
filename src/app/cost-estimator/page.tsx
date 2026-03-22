@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { AnimateIn } from "@/components/shared/animate-in";
 import { PageHeader } from "@/components/shared/page-header";
 import { StatusBadge } from "@/components/shared/status-badge";
+import { Skeleton } from "@/components/shared/skeleton";
 import { formatCurrency } from "@/lib/utils";
-import { mockCareOptions, mockVisitTypes } from "@/lib/mock/cost-estimator";
+import { mockVisitTypes } from "@/lib/mock/cost-estimator";
 import {
   Search,
   Monitor,
@@ -13,13 +14,11 @@ import {
   Clock,
   Siren,
   CheckCircle2,
-  ArrowRight,
   ToggleLeft,
   ToggleRight,
 } from "lucide-react";
-import type { CareSetting } from "@/types";
 
-const settingIcons: Record<CareSetting, React.ElementType> = {
+const settingIcons: Record<string, React.ElementType> = {
   telehealth: Monitor,
   primary_care: Stethoscope,
   urgent_care: Clock,
@@ -31,10 +30,39 @@ const settingIcons: Record<CareSetting, React.ElementType> = {
 export default function CostEstimatorPage() {
   const [selectedVisit, setSelectedVisit] = useState("Joint / muscle pain");
   const [inNetwork, setInNetwork] = useState(true);
-  const [selectedSetting, setSelectedSetting] = useState<CareSetting | null>(null);
+  const [selectedSettingKey, setSelectedSettingKey] = useState<string | null>(null);
+  
+  const [options, setOptions] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const selectedOption = selectedSetting
-    ? mockCareOptions.find((o) => o.setting === selectedSetting)
+  useEffect(() => {
+    let active = true;
+    setLoading(true);
+    fetch("/api/cost-estimator", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ visitType: selectedVisit, inNetwork }),
+    })
+      .then(res => res.json())
+      .then(data => {
+        if (active) {
+          setOptions(data);
+          setLoading(false);
+          if (data.length > 0 && !data.find((o: any) => o.settingKey === selectedSettingKey)) {
+            setSelectedSettingKey(null);
+          }
+        }
+      })
+      .catch(err => {
+        console.error(err);
+        if (active) setLoading(false);
+      });
+      
+    return () => { active = false; };
+  }, [selectedVisit, inNetwork, selectedSettingKey]);
+
+  const selectedOption = selectedSettingKey
+    ? options.find((o) => o.settingKey === selectedSettingKey)
     : null;
 
   return (
@@ -46,11 +74,9 @@ export default function CostEstimatorPage() {
         />
       </AnimateIn>
 
-      {/* Input Section */}
       <AnimateIn delay={0.05}>
         <div className="card-base mb-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Visit type selector */}
             <div>
               <label className="text-sm font-medium text-charcoal mb-2 block">
                 What do you need care for?
@@ -60,7 +86,8 @@ export default function CostEstimatorPage() {
                 <select
                   value={selectedVisit}
                   onChange={(e) => setSelectedVisit(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-neutral-200 text-sm bg-neutral-50 focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent appearance-none"
+                  className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-neutral-200 text-sm bg-neutral-50 focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent appearance-none disabled:opacity-50"
+                  disabled={loading}
                 >
                   {mockVisitTypes.map((type) => (
                     <option key={type} value={type}>{type}</option>
@@ -69,14 +96,14 @@ export default function CostEstimatorPage() {
               </div>
             </div>
 
-            {/* Network toggle */}
             <div>
               <label className="text-sm font-medium text-charcoal mb-2 block">
                 Provider Network
               </label>
               <button
                 onClick={() => setInNetwork(!inNetwork)}
-                className="flex items-center gap-3 w-full px-4 py-2.5 rounded-xl border border-neutral-200 bg-neutral-50 text-sm"
+                disabled={loading}
+                className="flex items-center gap-3 w-full px-4 py-2.5 rounded-xl border border-neutral-200 bg-neutral-50 text-sm disabled:opacity-50"
               >
                 {inNetwork ? (
                   <ToggleRight size={20} className="text-accent" />
@@ -93,91 +120,98 @@ export default function CostEstimatorPage() {
         </div>
       </AnimateIn>
 
-      {/* Compare cards */}
       <AnimateIn delay={0.1}>
         <h2 className="section-title mb-4">Compare Care Options</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          {mockCareOptions.map((option, idx) => {
-            const Icon = settingIcons[option.setting] || Stethoscope;
-            const isSelected = selectedSetting === option.setting;
+        {loading ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+            <Skeleton className="h-40 w-full" />
+            <Skeleton className="h-40 w-full" />
+            <Skeleton className="h-40 w-full" />
+            <Skeleton className="h-40 w-full" />
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+            {options.map((option, idx) => {
+              const Icon = settingIcons[option.icon] || Stethoscope;
+              const isSelected = selectedSettingKey === option.settingKey;
 
-            return (
-              <AnimateIn key={option.setting} delay={0.1 + idx * 0.03}>
-                <button
-                  onClick={() => setSelectedSetting(isSelected ? null : option.setting)}
-                  className={`card-base w-full text-left transition-all duration-200 ${
-                    isSelected
-                      ? "ring-2 ring-charcoal border-charcoal"
-                      : "hover:border-neutral-300"
-                  }`}
-                >
-                  <div className="flex items-center gap-3 mb-4">
-                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                      isSelected ? "bg-charcoal text-white" : "bg-neutral-50 text-neutral-500"
-                    }`}>
-                      <Icon size={18} />
+              return (
+                <AnimateIn key={option.settingKey} delay={0.1 + idx * 0.03}>
+                  <button
+                    onClick={() => setSelectedSettingKey(isSelected ? null : option.settingKey)}
+                    className={`card-base w-full text-left transition-all duration-200 ${
+                      isSelected
+                        ? "ring-2 ring-charcoal border-charcoal"
+                        : "hover:border-neutral-300"
+                    }`}
+                  >
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                        isSelected ? "bg-charcoal text-white" : "bg-neutral-50 text-neutral-500"
+                      }`}>
+                        <Icon size={18} />
+                      </div>
+                      <h3 className="text-sm font-semibold">{option.setting}</h3>
                     </div>
-                    <h3 className="text-sm font-semibold">{option.label}</h3>
-                  </div>
 
-                  <div className="space-y-2 mb-4">
-                    <div className="flex justify-between text-xs">
-                      <span className="text-neutral-500">Est. total</span>
-                      <span className="font-medium">{formatCurrency(option.estimatedCost)}</span>
+                    <div className="space-y-2 mb-4">
+                      <div className="flex justify-between text-xs">
+                        <span className="text-neutral-500">Est. total</span>
+                        <span className="font-medium">{formatCurrency(option.baseCost)}</span>
+                      </div>
+                      <div className="flex justify-between text-xs">
+                        <span className="text-neutral-500">Insurance pays</span>
+                        <span className="font-medium text-success">{formatCurrency(option.insurancePortion)}</span>
+                      </div>
+                      <div className="flex justify-between text-xs">
+                        <span className="text-neutral-500">You pay</span>
+                        <span className="font-semibold text-charcoal">{formatCurrency(option.userResponsibility)}</span>
+                      </div>
                     </div>
-                    <div className="flex justify-between text-xs">
-                      <span className="text-neutral-500">Insurance pays</span>
-                      <span className="font-medium text-success">{formatCurrency(option.insuranceCoverage)}</span>
-                    </div>
-                    <div className="flex justify-between text-xs">
-                      <span className="text-neutral-500">You pay</span>
-                      <span className="font-semibold text-charcoal">{formatCurrency(option.outOfPocket)}</span>
-                    </div>
-                  </div>
 
-                  <div className="pt-3 border-t border-neutral-100">
-                    <div className="flex items-center gap-1.5 text-xs text-neutral-400 mb-1">
-                      <Clock size={12} />
-                      <span>Wait: {option.waitTime}</span>
+                    <div className="pt-3 border-t border-neutral-100">
+                      <div className="flex items-center gap-1.5 text-xs text-neutral-400 mb-1">
+                        <Clock size={12} />
+                        <span>Wait: {option.waitTime}</span>
+                      </div>
+                      <p className="text-xs text-neutral-500">{option.bestFor}</p>
                     </div>
-                    <p className="text-xs text-neutral-500">{option.bestFor}</p>
-                  </div>
-                </button>
-              </AnimateIn>
-            );
-          })}
-        </div>
+                  </button>
+                </AnimateIn>
+              );
+            })}
+          </div>
+        )}
       </AnimateIn>
 
-      {/* Selected detail panel */}
       {selectedOption && (
         <AnimateIn delay={0.05}>
           <div className="card-base">
             <div className="flex items-center gap-3 mb-6">
               <CheckCircle2 size={18} className="text-accent" />
-              <h3 className="section-title">Cost Breakdown — {selectedOption.label}</h3>
+              <h3 className="section-title">Cost Breakdown — {selectedOption.setting}</h3>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
               <div className="p-4 rounded-lg bg-neutral-50 text-center">
                 <p className="text-xs text-neutral-500 mb-1">Estimated Total</p>
-                <p className="text-2xl font-semibold">{formatCurrency(selectedOption.estimatedCost)}</p>
+                <p className="text-2xl font-semibold">{formatCurrency(selectedOption.baseCost)}</p>
               </div>
               <div className="p-4 rounded-lg bg-success-muted text-center">
                 <p className="text-xs text-success mb-1">Insurance Covers</p>
-                <p className="text-2xl font-semibold text-success">{formatCurrency(selectedOption.insuranceCoverage)}</p>
+                <p className="text-2xl font-semibold text-success">{formatCurrency(selectedOption.insurancePortion)}</p>
               </div>
               <div className="p-4 rounded-lg bg-accent-muted text-center">
                 <p className="text-xs text-accent mb-1">Your Responsibility</p>
-                <p className="text-2xl font-semibold text-accent">{formatCurrency(selectedOption.outOfPocket)}</p>
+                <p className="text-2xl font-semibold text-accent">{formatCurrency(selectedOption.userResponsibility)}</p>
               </div>
             </div>
 
             <div className="p-4 rounded-lg bg-neutral-50 border border-neutral-100">
               <p className="text-xs font-semibold text-neutral-500 uppercase tracking-wide mb-2">Assumptions</p>
               <ul className="space-y-1 text-xs text-neutral-600">
-                <li className="flex items-start gap-1.5"><span className="text-neutral-300 mt-0.5">•</span> Using in-network provider</li>
-                <li className="flex items-start gap-1.5"><span className="text-neutral-300 mt-0.5">•</span> Based on current deductible progress (67% met)</li>
+                <li className="flex items-start gap-1.5"><span className="text-neutral-300 mt-0.5">•</span> Using {inNetwork ? "in-network" : "out-of-network"} provider</li>
+                <li className="flex items-start gap-1.5"><span className="text-neutral-300 mt-0.5">•</span> Based on current deductible progress</li>
                 <li className="flex items-start gap-1.5"><span className="text-neutral-300 mt-0.5">•</span> Standard visit without additional procedures</li>
                 <li className="flex items-start gap-1.5"><span className="text-neutral-300 mt-0.5">•</span> Regional average pricing for {selectedVisit.toLowerCase()}</li>
               </ul>

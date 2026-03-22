@@ -1,9 +1,10 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { AnimateIn } from "@/components/shared/animate-in";
 import { PageHeader } from "@/components/shared/page-header";
 import { StatusBadge } from "@/components/shared/status-badge";
-import { mockUser } from "@/lib/mock/user";
+import { Skeleton } from "@/components/shared/skeleton";
 import {
   Shield,
   Landmark,
@@ -34,7 +35,64 @@ const statusConfig: Record<string, { variant: "success" | "danger" | "warning"; 
 };
 
 export default function SettingsPage() {
-  const user = mockUser;
+  const [user, setUser] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let active = true;
+    fetch('/api/settings')
+      .then(res => res.json())
+      .then(data => {
+        if (active) {
+          setUser(data);
+          setLoading(false);
+        }
+      })
+      .catch(err => {
+        console.error(err);
+        if (active) setLoading(false);
+      });
+      
+    return () => { active = false; };
+  }, []);
+
+  const togglePreference = async (key: string) => {
+    if (!user) return;
+    
+    const newValue = !user.preferences[key];
+    
+    // Optimistic Update
+    setUser((prev: any) => ({
+      ...prev,
+      preferences: { ...prev.preferences, [key]: newValue },
+    }));
+
+    try {
+      const res = await fetch('/api/settings/preferences', {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ key, value: newValue }),
+      });
+      if (!res.ok) throw new Error("API call failed");
+    } catch (err) {
+      console.error(err);
+      // Revert if API fails
+      setUser((prev: any) => ({
+        ...prev,
+        preferences: { ...prev.preferences, [key]: !newValue },
+      }));
+    }
+  };
+
+  if (loading || !user) {
+    return (
+      <div className="page-container space-y-6">
+        <Skeleton className="h-24 w-3/4 mb-4" />
+        <Skeleton className="h-32 w-full" />
+        <Skeleton className="h-64 w-full" />
+      </div>
+    );
+  }
 
   return (
     <div className="page-container">
@@ -62,38 +120,42 @@ export default function SettingsPage() {
       <AnimateIn delay={0.1}>
         <div className="card-base mb-6">
           <h3 className="section-title mb-4">Connected Accounts</h3>
-          <div className="space-y-3">
-            {user.connectedAccounts.map((account) => {
-              const Icon = accountIcons[account.type] || CreditCard;
-              const status = statusConfig[account.status];
-              const StatusIcon = status.icon;
+          {user.connectedAccounts?.length === 0 ? (
+            <p className="text-sm text-neutral-500 py-2">No connected accounts yet.</p>
+          ) : (
+            <div className="space-y-3">
+              {user.connectedAccounts?.map((account: any) => {
+                const Icon = accountIcons[account.type] || CreditCard;
+                const status = statusConfig[account.status] || statusConfig.disconnected;
+                const StatusIcon = status.icon;
 
-              return (
-                <div
-                  key={account.id}
-                  className="flex items-center gap-4 p-3 rounded-lg hover:bg-neutral-50 transition-colors cursor-pointer"
-                >
-                  <div className="w-10 h-10 rounded-lg bg-neutral-50 flex items-center justify-center">
-                    <Icon size={18} className="text-neutral-500" />
+                return (
+                  <div
+                    key={account.id}
+                    className="flex items-center gap-4 p-3 rounded-lg hover:bg-neutral-50 transition-colors cursor-pointer"
+                  >
+                    <div className="w-10 h-10 rounded-lg bg-neutral-50 flex items-center justify-center">
+                      <Icon size={18} className="text-neutral-500" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-charcoal">{account.label || account.providerName}</p>
+                      {account.lastSync && (
+                        <p className="text-xs text-neutral-400">
+                          Last synced {new Date(account.lastSync).toLocaleDateString("en-US", {
+                            month: "short", day: "numeric", hour: "numeric", minute: "2-digit",
+                          })}
+                        </p>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <StatusBadge label={account.status} variant={status.variant} />
+                      <ChevronRight size={14} className="text-neutral-300" />
+                    </div>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-charcoal">{account.label}</p>
-                    {account.lastSync && (
-                      <p className="text-xs text-neutral-400">
-                        Last synced {new Date(account.lastSync).toLocaleDateString("en-US", {
-                          month: "short", day: "numeric", hour: "numeric", minute: "2-digit",
-                        })}
-                      </p>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <StatusBadge label={account.status} variant={status.variant} />
-                    <ChevronRight size={14} className="text-neutral-300" />
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       </AnimateIn>
 
@@ -103,20 +165,21 @@ export default function SettingsPage() {
           <h3 className="section-title mb-4">Preferences</h3>
           <div className="space-y-1">
             {[
-              { icon: Bell, label: "Push Notifications", value: user.preferences.notifications },
-              { icon: Mail, label: "Email Digest", value: user.preferences.emailDigest },
-              { icon: Moon, label: "Dark Mode", value: user.preferences.darkMode },
+              { icon: Bell, label: "Push Notifications", key: "notifications", value: user.preferences.notifications },
+              { icon: Mail, label: "Email Digest", key: "emailDigest", value: user.preferences.emailDigest },
+              { icon: Moon, label: "Dark Mode", key: "darkMode", value: user.preferences.darkMode },
             ].map((pref) => (
               <div
                 key={pref.label}
-                className="flex items-center justify-between p-3 rounded-lg hover:bg-neutral-50 transition-colors"
+                onClick={() => togglePreference(pref.key)}
+                className="flex items-center justify-between p-3 rounded-lg hover:bg-neutral-50 transition-colors cursor-pointer"
               >
                 <div className="flex items-center gap-3">
                   <pref.icon size={16} className="text-neutral-400" />
-                  <span className="text-sm text-charcoal">{pref.label}</span>
+                  <span className="text-sm text-charcoal pointer-events-none">{pref.label}</span>
                 </div>
                 <div
-                  className={`w-10 h-6 rounded-full flex items-center px-1 cursor-pointer transition-colors ${
+                  className={`w-10 h-6 rounded-full flex items-center px-1 transition-colors ${
                     pref.value ? "bg-charcoal" : "bg-neutral-200"
                   }`}
                 >

@@ -66,6 +66,8 @@ model Document {
   fileSize      String
   filePath      String?
   extractedData String?  // JSON: ExtractedBenefitSummary
+  linkedBillId  String?  // Relation to another document if type="eob"
+  isSettled     Boolean  @default(false)
   uploadedAt    DateTime @default(now())
 }
 

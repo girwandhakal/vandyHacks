@@ -1,0 +1,44 @@
+{
+  "assistantStatus": 200,
+  "assistantResponse": {
+    "conversationId": "cmn0xrt3u001fi8yqtsqquwie",
+    "message": {
+      "id": "cmn0xryab001ji8yqyo2lzllo",
+      "role": "assistant",
+      "content": "A deductible is the amount you pay out-of-pocket for healthcare services before your insurance begins to cover costs. For your Blue Cross Blue Shield PPO Gold plan, you have a deductible of $2000 for individual coverage and $4000 for family coverage. Since you've already paid $1340 towards your individual deductible, you need to cover an additional $660 before your insurance starts to share the costs.",
+      "structuredResponse": {
+        "recommendation": "Understand that you will need to pay your remaining deductible amount before your insurance starts to cover most costs.",
+        "coverageEstimate": "Once the deductible is met, your plan will cover 80% of in-network costs, and you will be responsible for the remaining 20%.",
+        "expectedCost": {
+          "low": 0,
+          "high": 660
+        },
+        "financialImpact": "Paying the remaining deductible will contribute to your out-of-pocket maximum. After reaching the deductible, your coinsurance will apply to further costs.",
+        "assumptions": [
+          "The remaining deductible will be paid in full before incurring additional medical costs.",
+          "Costs incurred are for in-network services to take advantage of the higher coinsurance.",
+          "No additional medical services will push you over the out-of-pocket maximum this year."
+        ],
+        "confidenceLevel": "high",
+        "followUpQuestions": [
+          "Do you have upcoming medical expenses that you are concerned about?",
+          "Would you like to know more about how coinsurance works?",
+          "Are you considering any specific healthcare services soon?"
+        ]
+      },
+      "timestamp": "2026-03-21T23:05:35.316Z"
+    },
+    "title": "What is a deductible?..."
+  },
+  "documentStatus": 200,
+  "documentResponse": {
+    "id": "cmn0xryjf001ki8yqnt2a1rpu",
+    "name": "dummy-bill.txt",
+    "type": "insurance_plan",
+    "status": "analyzing",
+    "fileSize": "0.07 KB",
+    "filePath": "/uploads/1774134335641-dummy-bill.txt",
+    "extractedData": null,
+    "uploadedAt": "2026-03-21T23:05:35.643Z"
+  }
+}

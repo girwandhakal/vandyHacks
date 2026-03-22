@@ -1,0 +1,39 @@
+﻿{
+  "plan": {
+    "id": "plan-001",
+    "name": "ISO Care Unlimited",
+    "provider": "Blue Cross Blue Shield",
+    "type": "PPO",
+    "planYearStart": "2026-01-01",
+    "planYearEnd": "2026-12-31",
+    "deductibleIndiv": 500,
+    "deductibleFamily": 0,
+    "deductibleMetIndiv": 1340,
+    "deductibleMetFamily": 2100,
+    "oopMaxIndiv": 6350,
+    "oopMaxFamily": 12000,
+    "oopSpentIndiv": 2180,
+    "oopSpentFamily": 3600,
+    "coinsuranceIn": 80,
+    "coinsuranceOut": 60,
+    "copays": "{\"primaryCare\":30,\"specialist\":50,\"urgentCare\":50,\"emergencyRoom\":300,\"telehealth\":0}",
+    "pharmacyBenefits": "{\"generic\":30,\"preferred\":30,\"nonPreferred\":0,\"specialty\":0}",
+    "coverageRules": "[\"Pre-certification is required for certain services.\",\"Benefits are limited to medically necessary services.\",\"No benefits will be paid for services designated as 'No Benefits'.\"]",
+    "exclusions": "[\"Expenses determined not to be medically necessary.\",\"Benefits for services incurred in home country.\",\"Rental charges in excess of purchase price for durable medical equipment.\"]",
+    "priorAuthRequired": "[\"Inpatient Hospitalization\",\"High Risk Maternity\",\"Certain Outpatient Surgical procedures\"]",
+    "createdAt": "2026-03-21T22:39:49.305Z",
+    "updatedAt": "2026-03-22T00:33:52.370Z"
+  },
+  "latestDoc": {
+    "id": "cmn10xd8u0030i8yqvgzppe0d",
+    "name": "ISO_Care_2025_2026_A.pdf",
+    "type": "insurance_plan",
+    "status": "ready",
+    "fileSize": "407.05 KB",
+    "filePath": "/uploads/1774139626067-ISO_Care_2025_2026_A.pdf",
+    "extractedData": "{\"planName\":\"ISO Care Unlimited\",\"deductibleIndiv\":500,\"deductibleFamily\":0,\"oopMaxIndiv\":6350,\"oopMaxFamily\":12000,\"coinsuranceIn\":80,\"coinsuranceOut\":60,\"copays\":{\"primaryCare\":30,\"specialist\":50,\"urgentCare\":50,\"emergencyRoom\":300,\"telehealth\":0},\"pharmacyBenefits\":{\"generic\":30,\"preferred\":30,\"nonPreferred\":0,\"specialty\":0},\"coverageRules\":[\"Pre-certification is required for certain services.\",\"Benefits are limited to medically necessary services.\",\"No benefits will be paid for services designated as 'No Benefits'.\"],\"exclusions\":[\"Expenses determined not to be medically necessary.\",\"Benefits for services incurred in home country.\",\"Rental charges in excess of purchase price for durable medical equipment.\"],\"priorAuthRequired\":[\"Inpatient Hospitalization\",\"High Risk Maternity\",\"Certain Outpatient Surgical procedures\"]}",
+    "uploadedAt": "2026-03-22T00:33:46.831Z"
+  },
+  "hasTxt": true,
+  "txtSample": "\n\nISO Care\nDedicated Insurance for International Students\nACA Comparable\n\n2\nTABLE OF CONTENTS\nELIGIBILITY .............................................................................................."
+}
