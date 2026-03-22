@@ -208,3 +208,96 @@ If a numerical value cannot be found, use 0. If rules/exclusions cannot be found
     return { isValid: false, rejectionReason: "Failed to cleanly parse the document using AI." };
   }
 }
+
+export async function generateFinancialScenario(params: {
+  procedureType: string;
+  totalEstimatedCost: number;
+  userResponsibility: number;
+  hsaAvailable: number;
+  monthlyIncome: number;
+}): Promise<{
+  hsaRecommended: number;
+  monthlyImpactPercent: number;
+  financialStrainLevel: "low" | "moderate" | "high";
+  paymentScenarios: Array<{
+    id: string;
+    label: string;
+    duration: string;
+    monthlyAmount: number;
+    totalCost: number;
+    description: string;
+  }>;
+}> {
+  const systemPrompt = `You are a highly empathetic healthcare financial advisor for ClearPath.
+
+The user needs a medical procedure (${params.procedureType}).
+Their total responsibility after insurance is $${params.userResponsibility.toFixed(2)}.
+They have $${params.hsaAvailable.toFixed(2)} available in their Health Savings Account (HSA).
+Their estimated monthly income is $${params.monthlyIncome.toFixed(2)} (or ~$${(params.monthlyIncome * 12).toLocaleString()} annually).
+
+Your goal is to build a realistic, compassionate payment strategy that minimizes their financial strain while being practical.
+
+STEP 1: Determine HSA Usage
+Recommend how much of their HSA they should use upfront ("hsaRecommended"). If the responsibility is very high, avoid draining their HSA completely—leave them a small safety net if possible. However, if using the full HSA eliminates the debt, do that.
+
+STEP 2: Strain Analysis
+Calculate the "monthlyImpactPercent" (the likely monthly payment of the remaining balance as a percentage of their monthly income) and classify their "financialStrainLevel" (low, moderate, high) based on whether paying the remainder will severely disrupt their life.
+
+STEP 3: Payment Scenarios
+Generate EXACTLY 4 highly personalized payment plans ("paymentScenarios"). They MUST have the following exact keys to match the frontend UI:
+- id (string, e.g., "ps-1")
+- label (string, e.g., "HSA + Hospital Payment Plan", "Medical Financing", "Income-Driven Hardship Plan", "Pay in Full Discount")
+- duration (string, e.g., "12 months", "Immediate", "24 months")
+- monthlyAmount (number, how much they pay each month)
+- totalCost (number, total cost including interest if applicable)
+- description (string, exactly 1-2 brief empathetic sentences explaining why this strategy makes sense)
+
+Return ONLY a raw JSON object with the following exact structure (no markdown tags):
+{
+  "hsaRecommended": number,
+  "monthlyImpactPercent": number,
+  "financialStrainLevel": "low" | "moderate" | "high",
+  "paymentScenarios": [
+    { "id": "...", "label": "...", "duration": "...", "monthlyAmount": number, "totalCost": number, "description": "..." }
+  ]
+}`;
+
+  try {
+    const completion = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: "Generate the personalized financial scenario JSON now. Only return JSON." }
+      ],
+      temperature: 0.4,
+    });
+    
+    let responseText = completion.choices[0]?.message?.content || "{}";
+    if (responseText.startsWith("\`\`\`json")) {
+      responseText = responseText.replace(/^\`\`\`json\s*/, "").replace(/\`\`\`\s*$/, "");
+    } else if (responseText.startsWith("\`\`\`")) {
+      responseText = responseText.replace(/^\`\`\`\s*/, "").replace(/\`\`\`\s*$/, "");
+    }
+
+    return JSON.parse(responseText.trim());
+  } catch (error) {
+    console.error("Error generating financial scenario:", error);
+    // Fallback safe defaults if AI fails
+    return {
+      hsaRecommended: Math.min(params.hsaAvailable, params.userResponsibility),
+      monthlyImpactPercent: 0,
+      financialStrainLevel: "moderate",
+      paymentScenarios: [
+        {
+          id: "ps-fallback",
+          label: "Standard Payment Plan",
+          duration: "12 months",
+          monthlyAmount: params.userResponsibility / 12,
+          totalCost: params.userResponsibility,
+          description: "A standard 12-month payment plan. We recommend trying again later for personalized options."
+        }
+      ]
+    };
+  }
+}
+
