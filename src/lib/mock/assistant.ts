@@ -38,7 +38,7 @@ export const mockConversation: Conversation = {
         ],
         immediateNextSteps: ["Book a telehealth or primary care visit", "Check if MRI would need prior authorization"],
         documentsReferenced: [
-          { id: "insurance-plan", type: "insurance_plan", label: "BCBS PPO Gold" },
+          { id: "insurance-plan", type: "insurance_plan", label: "ISO Student Insurance" },
           { id: "financial-profile", type: "financial_profile", label: "Financial profile snapshot" },
         ],
         assumptions: [
@@ -90,7 +90,7 @@ export const mockConversation: Conversation = {
         ],
         immediateNextSteps: ["Confirm visit limits", "Verify in-network therapist availability"],
         documentsReferenced: [
-          { id: "insurance-plan", type: "insurance_plan", label: "BCBS PPO Gold" },
+          { id: "insurance-plan", type: "insurance_plan", label: "ISO Student Insurance" },
           { id: "financial-profile", type: "financial_profile", label: "Financial profile snapshot" },
         ],
         assumptions: [
@@ -121,3 +121,4 @@ export const mockSuggestedQuestions = [
   "What preventive care is free under my plan?",
   "How do I submit a claim for reimbursement?",
 ];
+

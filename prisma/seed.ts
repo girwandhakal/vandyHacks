@@ -24,10 +24,9 @@ async function main() {
   // --- Connected Accounts ---
   await prisma.connectedAccount.createMany({
     data: [
-      { id: "acc-1", type: "insurance", label: "Blue Cross Blue Shield", status: "connected", lastSync: new Date("2026-03-21T08:00:00Z"), userId: user.id },
-      { id: "acc-2", type: "bank", label: "Chase Checking ••4821", status: "connected", lastSync: new Date("2026-03-20T22:00:00Z"), userId: user.id },
-      { id: "acc-3", type: "hsa", label: "Fidelity HSA", status: "connected", lastSync: new Date("2026-03-19T12:00:00Z"), userId: user.id },
-      { id: "acc-4", type: "fsa", label: "FSA Account", status: "disconnected", userId: user.id },
+      { id: "acc-1", type: "insurance", label: "ISO Student Insurance", status: "connected", lastSync: new Date("2026-03-21T10:00:00Z"), userId: user.id },
+      { id: "acc-2", type: "bank", label: "Chase Checking ****4821", status: "connected", lastSync: new Date("2026-03-21T10:00:00Z"), userId: user.id },
+      { id: "acc-3", type: "hsa", label: "Fidelity HSA", status: "connected", lastSync: new Date("2026-03-21T10:00:00Z"), userId: user.id },
     ],
   });
   console.log("  ✅ Connected accounts created");
@@ -36,8 +35,8 @@ async function main() {
   await prisma.insurancePlan.create({
     data: {
       id: "plan-001",
-      name: "Blue Cross Blue Shield PPO Gold",
-      provider: "Blue Cross Blue Shield",
+      name: "ISO Student Insurance",
+      provider: "ISO Student Insurance",
       type: "PPO",
       planYearStart: "2026-01-01",
       planYearEnd: "2026-12-31",
@@ -125,14 +124,14 @@ async function main() {
   await prisma.document.createMany({
     data: [
       {
-        id: "doc-1", name: "BCBS_PPO_Gold_2026_Summary.pdf", type: "insurance_plan", status: "ready",
+        id: "doc-1", name: "ISO_Student_Insurance_2026_Summary.pdf", type: "insurance_plan", status: "ready",
         fileSize: "2.4 MB", uploadedAt: new Date("2026-02-15T09:00:00Z"),
-        extractedData: JSON.stringify({ planName: "Blue Cross Blue Shield PPO Gold", deductible: 2000, outOfPocketMax: 6500, coverage: "Comprehensive medical, dental, vision" }),
+        extractedData: JSON.stringify({ planName: "ISO Student Insurance", deductible: 2000, outOfPocketMax: 6500, coverage: "Comprehensive medical, dental, vision" }),
       },
       {
         id: "doc-2", name: "EOB_Dr_Martinez_Feb2026.pdf", type: "eob", status: "ready",
         fileSize: "856 KB", uploadedAt: new Date("2026-03-05T14:30:00Z"),
-        extractedData: JSON.stringify({ planName: "BCBS PPO Gold", deductible: 185, outOfPocketMax: 37, coverage: "Office visit — Primary Care" }),
+        extractedData: JSON.stringify({ planName: "ISO Student Insurance", deductible: 185, outOfPocketMax: 37, coverage: "Office visit — Primary Care" }),
       },
       {
         id: "doc-3", name: "Lab_Invoice_Quest_Mar2026.pdf", type: "medical_bill", status: "analyzing",
@@ -141,7 +140,7 @@ async function main() {
       {
         id: "doc-4", name: "MRI_Estimate_RadiologyGroup.pdf", type: "estimate", status: "ready",
         fileSize: "420 KB", uploadedAt: new Date("2026-03-19T16:45:00Z"),
-        extractedData: JSON.stringify({ planName: "BCBS PPO Gold", deductible: 850, outOfPocketMax: 170, coverage: "Diagnostic imaging — MRI knee" }),
+        extractedData: JSON.stringify({ planName: "ISO Student Insurance", deductible: 850, outOfPocketMax: 170, coverage: "Diagnostic imaging — MRI knee" }),
       },
       {
         id: "doc-5", name: "Prescription_Summary_Q1.pdf", type: "medical_bill", status: "error",
@@ -196,7 +195,7 @@ async function main() {
         content: "Based on your symptoms and insurance coverage, here are your options for addressing knee pain that's lasted two weeks.",
         structuredResponse: JSON.stringify({
           recommendation: "Start with a telehealth consultation to assess severity. If imaging is needed, your doctor can order an X-ray or MRI. For persistent pain lasting 2+ weeks, a primary care visit is recommended as the next step.",
-          coverageEstimate: "Your BCBS PPO Gold plan covers telehealth at $15 copay and primary care at $30 copay. If imaging is needed, it would apply to your deductible (67% met). Physical therapy is covered at 80% after deductible.",
+          coverageEstimate: "Your ISO Student Insurance plan covers telehealth at $15 copay and primary care at $30 copay. If imaging is needed, it would apply to your deductible (67% met). Physical therapy is covered at 80% after deductible.",
           expectedCost: { low: 15, high: 350 },
           financialImpact: "Low impact. A telehealth visit costs $15. Even if an MRI is needed ($200-350 after your deductible progress), you have remaining deductible capacity and your HSA balance of $1,850 can cover it.",
           assumptions: ["Using in-network providers", "Based on your current deductible progress (67% met)", "No prior authorization needed for initial consultation", "MRI cost estimate based on regional averages"],
@@ -281,3 +280,7 @@ main()
   .finally(async () => {
     await prisma.$disconnect();
   });
+
+
+
+

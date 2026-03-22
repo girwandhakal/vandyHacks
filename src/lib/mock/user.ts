@@ -8,7 +8,7 @@ export const mockUser: UserProfile = {
     {
       id: "acc-1",
       type: "insurance",
-      label: "Blue Cross Blue Shield",
+      label: "ISO Student Insurance",
       status: "connected",
       lastSync: "2026-03-21T08:00:00Z",
     },
@@ -40,3 +40,4 @@ export const mockUser: UserProfile = {
     currency: "USD",
   },
 };
+

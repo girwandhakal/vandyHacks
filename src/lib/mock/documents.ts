@@ -3,13 +3,13 @@ import { UploadedDocument } from "@/types";
 export const mockDocuments: UploadedDocument[] = [
   {
     id: "doc-1",
-    name: "BCBS_PPO_Gold_2026_Summary.pdf",
+    name: "ISO_Student_Insurance_2026_Summary.pdf",
     type: "insurance_plan",
     status: "ready",
     uploadedAt: "2026-02-15T09:00:00Z",
     fileSize: "2.4 MB",
     extractedData: {
-      planName: "Blue Cross Blue Shield PPO Gold",
+      planName: "ISO Student Insurance",
       deductible: 2000,
       outOfPocketMax: 6500,
       coverage: "Comprehensive medical, dental, vision",
@@ -23,7 +23,7 @@ export const mockDocuments: UploadedDocument[] = [
     uploadedAt: "2026-03-05T14:30:00Z",
     fileSize: "856 KB",
     extractedData: {
-      planName: "BCBS PPO Gold",
+      planName: "ISO Student Insurance",
       deductible: 185,
       outOfPocketMax: 37,
       coverage: "Office visit — Primary Care",
@@ -45,7 +45,7 @@ export const mockDocuments: UploadedDocument[] = [
     uploadedAt: "2026-03-19T16:45:00Z",
     fileSize: "420 KB",
     extractedData: {
-      planName: "BCBS PPO Gold",
+      planName: "ISO Student Insurance",
       deductible: 850,
       outOfPocketMax: 170,
       coverage: "Diagnostic imaging — MRI knee",
@@ -60,3 +60,4 @@ export const mockDocuments: UploadedDocument[] = [
     fileSize: "310 KB",
   },
 ];
+

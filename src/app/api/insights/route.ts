@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { HSA_BALANCE } from "@/lib/mock/connected-accounts";
 
 export async function GET() {
   try {
@@ -47,7 +48,7 @@ export async function GET() {
       });
     }
 
-    const hsaBalance = 3450.00;
+    const hsaBalance = HSA_BALANCE;
     if (hsaBalance > 2000) {
       insights.push({
         id: "hsa-savings",

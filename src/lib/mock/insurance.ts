@@ -2,8 +2,8 @@ import { InsurancePlan } from "@/types";
 
 export const mockInsurancePlan: InsurancePlan = {
   id: "plan-001",
-  name: "Blue Cross Blue Shield PPO Gold",
-  provider: "Blue Cross Blue Shield",
+  name: "ISO Student Insurance",
+  provider: "ISO Student Insurance",
   type: "PPO",
   planYear: { start: "2026-01-01", end: "2026-12-31" },
   deductible: { individual: 2000, family: 4000 },
@@ -46,3 +46,4 @@ export const mockInsurancePlan: InsurancePlan = {
     "Durable medical equipment over $500",
   ],
 };
+

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { procedurePricing } from "@/lib/pricing";
 import { generateFinancialScenario } from "@/lib/gemini";
+import { HSA_BALANCE } from "@/lib/mock/connected-accounts";
 
 export async function GET() {
   try {
@@ -19,6 +20,9 @@ export async function POST(request: Request) {
   try {
     const { procedureType } = await request.json();
     const plan = await prisma.insurancePlan.findFirst();
+    const financialSnapshot = await (prisma as any).financialProfileSnapshot?.findFirst?.({
+      orderBy: { asOfDate: "desc" },
+    });
 
     if (!plan) {
       return NextResponse.json({ error: "Insurance plan missing" }, { status: 404 });
@@ -50,9 +54,15 @@ export async function POST(request: Request) {
 
     const insurancePortion = baseCost - userResponsibility;
 
-    // Simulate real user financial context
-    const hsaAvailable = 3450.00;
-    const monthlyIncome = 6000;
+    // Use Plaid-based financial context when available
+    const hsaAvailable =
+      typeof financialSnapshot?.hsaBalance === "number" && financialSnapshot.hsaBalance > 0
+        ? financialSnapshot.hsaBalance
+        : HSA_BALANCE;
+    const monthlyIncome =
+      typeof financialSnapshot?.monthlyIncomeEstimate === "number" && financialSnapshot.monthlyIncomeEstimate > 0
+        ? financialSnapshot.monthlyIncomeEstimate
+        : 6000;
 
     // --- WOW FACTOR: Connect to AI Financial Modeler ---
     const aiScenario = await generateFinancialScenario({

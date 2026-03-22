@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { HSA_BALANCE } from "@/lib/mock/connected-accounts";
 
 export async function GET() {
   try {
@@ -40,7 +41,7 @@ export async function GET() {
       },
       financialSnapshot: {
         // Hardcoding HSA balance as it is not present in User/ConnectedAccount schemas explicitly yet
-        hsaBalance: 3450.00,
+        hsaBalance: HSA_BALANCE,
         ytdSpending: plan.oopSpentIndiv,
       },
       upcomingReminders,
