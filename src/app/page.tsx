@@ -25,8 +25,6 @@ import {
   Clock,
   CheckCircle2,
   AlertCircle,
-  Info,
-  Sparkles,
 } from "lucide-react";
 
 const iconMap: Record<string, React.ElementType> = {
@@ -73,7 +71,7 @@ export default function DashboardPage() {
     );
   }
 
-  const { greeting, currentMonth, alerts, insurance: plan, financialSnapshot, upcomingReminders, recentActivity } = data;
+  const { greeting, currentMonth, insurance: plan, financialSnapshot, upcomingReminders, recentActivity } = data;
 
   const mockQuickActions = [
     { id: "1", label: "Estimate Cost", icon: "Calculator", href: "/cost-estimator" },
@@ -93,36 +91,8 @@ export default function DashboardPage() {
         />
       </AnimateIn>
 
-      {/* Alerts */}
-      <AnimateIn delay={0.05}>
-        <div className="space-y-2 mb-8">
-          {alerts.map((alert: any) => (
-            <div
-              key={alert.id}
-              className="flex items-start gap-3 p-4 rounded-2xl border border-neutral-100 bg-white/80 backdrop-blur-md hover:bg-white shadow-sm transition-colors"
-            >
-              <div className="mt-0.5">
-                {alert.type === "success" && <Sparkles size={16} className="text-success" />}
-                {alert.type === "info" && <Info size={16} className="text-accent" />}
-                {alert.type === "warning" && <AlertCircle size={16} className="text-warning" />}
-                {alert.type === "action" && <FileText size={16} className="text-accent" />}
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-base font-bold text-[#111111]">{alert.title}</p>
-                <p className="text-xs text-neutral-500 mt-0.5">{alert.description}</p>
-              </div>
-              {alert.actionLabel && (
-                <button className="text-xs font-medium text-accent hover:text-accent-light transition-colors whitespace-nowrap">
-                  {alert.actionLabel}
-                </button>
-              )}
-            </div>
-          ))}
-        </div>
-      </AnimateIn>
-
       {/* Deductible & OOP Progress */}
-      <AnimateIn delay={0.1}>
+      <AnimateIn delay={0.05}>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
           <div className="card-base flex items-center gap-6">
             <ProgressRing
@@ -185,7 +155,7 @@ export default function DashboardPage() {
       </AnimateIn>
 
       {/* Financial Snapshot Row */}
-      <AnimateIn delay={0.15}>
+      <AnimateIn delay={0.1}>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
           <StatCard
             label="Year-to-Date"
@@ -215,7 +185,7 @@ export default function DashboardPage() {
       </AnimateIn>
 
       {/* Quick Actions */}
-      <AnimateIn delay={0.2}>
+      <AnimateIn delay={0.15}>
         <div className="mb-8">
           <h2 className="section-title mb-4">Quick Actions</h2>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
@@ -239,7 +209,7 @@ export default function DashboardPage() {
       </AnimateIn>
 
       {/* AI Assistant Entry + Care Reminders */}
-      <AnimateIn delay={0.25}>
+      <AnimateIn delay={0.2}>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-8">
           {/* AI Assistant Card */}
           <Link href="/assistant" className="card-base group flex flex-col justify-between">
@@ -301,7 +271,7 @@ export default function DashboardPage() {
       </AnimateIn>
 
       {/* Recent Activity + Insurance Status */}
-      <AnimateIn delay={0.3}>
+      <AnimateIn delay={0.25}>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {/* Recent Activity */}
           <div className="card-base">

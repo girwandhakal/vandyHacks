@@ -89,16 +89,6 @@ async function main() {
   });
   console.log("  ✅ Insurance plan created");
 
-  // --- Alerts ---
-  await prisma.alert.createMany({
-    data: [
-      { id: "alert-1", title: "Deductible Progress", description: "You've met 67% of your individual deductible. Consider scheduling deferred care.", type: "info", actionLabel: "View details" },
-      { id: "alert-2", title: "New EOB Available", description: "An Explanation of Benefits from your Feb 28 visit is ready to review.", type: "action", actionLabel: "Review now" },
-      { id: "alert-3", title: "Potential Savings Found", description: "Telehealth could save you $45 on your upcoming dermatology consultation.", type: "success", actionLabel: "Compare options" },
-    ],
-  });
-  console.log("  ✅ Alerts created");
-
   // --- Care Reminders ---
   await prisma.careReminder.createMany({
     data: [
