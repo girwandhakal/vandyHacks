@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { motion } from "framer-motion";
 import { AnimateIn } from "@/components/shared/animate-in";
 import { PageHeader } from "@/components/shared/page-header";
 import { StatusBadge } from "@/components/shared/status-badge";
@@ -184,31 +185,31 @@ export default function DocumentsPage() {
           <div className="grid grid-cols-2 gap-4 text-sm">
             {extractedData.network && (
               <div>
-                <span className="text-xs text-neutral-400 block mb-0.5">Network</span>
-                <p className="font-medium text-charcoal">{extractedData.network}</p>
+                <span className="text-xs text-neutral-500 block mb-0.5">Network</span>
+                <p className="font-medium text-[#111111]">{extractedData.network}</p>
               </div>
             )}
             {extractedData.providerName && (
               <div>
-                <span className="text-xs text-neutral-400 block mb-0.5">Provider</span>
-                <p className="font-medium text-charcoal">{extractedData.providerName}</p>
+                <span className="text-xs text-neutral-500 block mb-0.5">Provider</span>
+                <p className="font-medium text-[#111111]">{extractedData.providerName}</p>
               </div>
             )}
             {extractedData.dateOfService && (
               <div>
-                <span className="text-xs text-neutral-400 block mb-0.5">Date of Service</span>
-                <p className="font-medium text-charcoal">{extractedData.dateOfService}</p>
+                <span className="text-xs text-neutral-500 block mb-0.5">Date of Service</span>
+                <p className="font-medium text-[#111111]">{extractedData.dateOfService}</p>
               </div>
             )}
             {extractedData.totalAmount !== undefined && (
               <div>
-                <span className="text-xs text-neutral-400 block mb-0.5">Total Charged</span>
-                <p className="font-medium text-charcoal">{formatCurrency(extractedData.totalAmount)}</p>
+                <span className="text-xs text-neutral-500 block mb-0.5">Total Charged</span>
+                <p className="font-medium text-[#111111]">{formatCurrency(extractedData.totalAmount)}</p>
               </div>
             )}
             {extractedData.patientResponsibility !== undefined && (
               <div>
-                <span className="text-xs text-neutral-400 block mb-0.5">Your Responsibility</span>
+                <span className="text-xs text-neutral-500 block mb-0.5">Your Responsibility</span>
                 <p className="font-medium text-accent">{formatCurrency(extractedData.patientResponsibility)}</p>
               </div>
             )}
@@ -250,8 +251,8 @@ export default function DocumentsPage() {
 
       {/* Global Universal Upload Dropzone */}
       <AnimateIn delay={0.05}>
-        <div className={`card-base mb-8 relative overflow-hidden group border-2 transition-colors ${
-          isGlobalLoading ? "border-accent bg-accent/5" : "border-dashed border-neutral-200 hover:border-accent bg-neutral-50/50"
+        <div className={`card-base mb-8 relative overflow-hidden group border-2 transition-all duration-500 py-12 ${
+          isGlobalLoading ? "border-accent shadow-[0_0_40px_rgba(58,134,255,0.2)] bg-accent/5 backdrop-blur-2xl" : "border-dashed border-neutral-200 hover:border-accent hover:bg-white/50"
         }`}>
           {!isGlobalLoading && (
             <input 
@@ -261,23 +262,53 @@ export default function DocumentsPage() {
               onChange={handleGlobalUpload}
             />
           )}
-          <div className="flex flex-col items-center justify-center py-10 text-center">
-            <div className="w-16 h-16 rounded-full bg-accent/10 flex items-center justify-center text-accent mb-4 group-hover:scale-110 transition-transform">
-              {isGlobalLoading ? <Loader2 size={32} className="animate-spin" /> : <CloudUpload size={32} />}
+
+          {isGlobalLoading ? (
+            <div className="flex flex-col items-center justify-center w-full relative">
+              <div className="relative w-28 h-36 bg-white border border-neutral-100 rounded-xl overflow-hidden shadow-sm flex items-center justify-center">
+                 <FileText size={48} className="text-neutral-300" />
+                 
+                 {/* Glowing Laser Scan Line */}
+                 <motion.div 
+                   className="absolute left-0 right-0 h-1 bg-accent shadow-[0_0_20px_4px_rgba(58,134,255,0.8)] z-20"
+                   animate={{ top: ["0%", "100%", "0%"] }}
+                   transition={{ duration: 2.5, repeat: Infinity, ease: "linear" }}
+                 />
+                 
+                 {/* Laser Scan Body Gradient */}
+                 <motion.div 
+                   className="absolute inset-0 bg-gradient-to-b from-transparent via-accent/30 to-transparent z-10"
+                   animate={{ top: ["-100%", "100%", "-100%"] }}
+                   transition={{ duration: 2.5, repeat: Infinity, ease: "linear" }}
+                 />
+              </div>
+              <motion.h3 
+                initial={{ opacity: 0.5 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 1, repeat: Infinity, repeatType: "reverse" }}
+                className="text-lg font-bold text-charcoal mt-8 tracking-wide drop-shadow-sm"
+              >
+                Autonomous AI Analyzing...
+              </motion.h3>
+              <p className="text-xs text-accent mt-2 animate-pulse">Extracting financial data & verifying policies</p>
             </div>
-            <h3 className="text-lg font-semibold text-charcoal mb-1">
-              {isGlobalLoading ? "Analyzing & Classifying Document..." : "Upload Medical Document"}
-            </h3>
-            <p className="text-sm text-neutral-500 max-w-sm mx-auto">
-              Drop an insurance plan, medical bill, or EOB here. It will automatically route to its designated section below.
-            </p>
-          </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center text-center">
+              <div className="w-20 h-20 rounded-2xl bg-accent/10 flex items-center justify-center text-accent mb-5 group-hover:scale-110 group-hover:bg-accent/20 transition-all duration-300 shadow-[0_0_30px_rgba(58,134,255,0.15)]">
+                <CloudUpload size={40} />
+              </div>
+              <h3 className="text-xl font-bold text-charcoal mb-2 drop-shadow-sm">Upload Medical Document</h3>
+              <p className="text-sm text-neutral-400 max-w-sm mx-auto">
+                Drop an insurance plan, medical bill, or EOB here. Our AI will automatically classify and route it.
+              </p>
+            </div>
+          )}
         </div>
       </AnimateIn>
 
       {/* Core Policy Document (Singleton) */}
       <div className="mb-10">
-        <h2 className="text-lg font-semibold text-charcoal mb-4 flex items-center gap-2">
+        <h2 className="text-xl font-bold text-[#111111] tracking-tight mb-4 flex items-center gap-2">
           <Shield className="text-accent" size={20} /> Active Insurance Policy
         </h2>
         
@@ -285,14 +316,14 @@ export default function DocumentsPage() {
           <Skeleton className="h-32 w-full" />
         ) : insurancePlan ? (
           <AnimateIn>
-            <div className="card-base border border-neutral-200/60 bg-white">
+            <div className="card-base">
               <div className="flex items-center justify-between mb-4">
                  <div className="flex items-center gap-4">
                     <div className="w-12 h-12 rounded-xl bg-accent/10 flex items-center justify-center text-accent">
                       <Shield size={24} />
                     </div>
                     <div>
-                      <h3 className="font-semibold text-charcoal text-base">{insurancePlan.name}</h3>
+                      <h3 className="font-bold text-[#111111] text-lg">{insurancePlan.name}</h3>
                       <p className="text-xs text-neutral-500 mt-0.5">{insurancePlan.fileSize} • Uploaded {new Date(insurancePlan.uploadedAt).toLocaleDateString()}</p>
                     </div>
                  </div>
@@ -319,26 +350,26 @@ export default function DocumentsPage() {
             </div>
           </AnimateIn>
         ) : (
-          <div className="py-8 px-6 border border-dashed border-neutral-200 rounded-2xl bg-neutral-50/50 flex flex-col items-center">
-             <Shield size={24} className="text-neutral-300 mb-2" />
-             <p className="text-sm font-medium text-neutral-500">No Active Policy Uploaded</p>
+          <div className="py-8 px-6 border-2 border-dashed border-neutral-200 rounded-2xl bg-white/50 flex flex-col items-center">
+             <Shield size={32} className="text-neutral-300 mb-3" />
+             <p className="text-sm font-bold text-neutral-600 tracking-wide">No Active Policy Uploaded</p>
           </div>
         )}
       </div>
 
       {/* ACTIVE Relational Claims Section */}
       <div className="mb-12">
-        <h2 className="text-lg font-semibold text-charcoal mb-4 flex items-center gap-2">
+        <h2 className="text-xl font-bold text-[#111111] tracking-tight mb-4 flex items-center gap-2">
           <FileText className="text-neutral-600" size={20} /> Active Medical Claims
         </h2>
 
         {loading && activeClaims.length === 0 && unlinkedEobs.length === 0 ? (
            <Skeleton className="h-64 w-full" />
         ) : activeClaims.length === 0 && unlinkedEobs.length === 0 ? (
-           <div className="py-12 border border-dashed border-neutral-200 rounded-2xl bg-neutral-50/50 flex flex-col items-center text-center">
-             <Receipt size={32} className="text-neutral-300 mb-3" />
-             <p className="text-sm font-medium text-neutral-500">No Active Claims</p>
-             <p className="text-xs text-neutral-400 mt-1 max-w-xs">Upload medical bills and Explanation of Benefits statements above. The system will automatically construct claim pairs.</p>
+           <div className="py-12 border-2 border-dashed border-neutral-200 rounded-2xl bg-white/50 flex flex-col items-center text-center">
+             <Receipt size={40} className="text-neutral-300 mb-4" />
+             <p className="text-base font-bold text-neutral-400">No Active Claims</p>
+             <p className="text-sm text-neutral-500 mt-2 max-w-xs leading-relaxed">Upload medical bills and Explanation of Benefits statements above. AI will automatch them.</p>
            </div>
         ) : (
           <div className="space-y-6">
@@ -346,17 +377,17 @@ export default function DocumentsPage() {
             {/* Display Claims (Bills + Linked EOBs) */}
             {activeClaims.map((claim, idx) => (
                <AnimateIn key={claim.bill.id} delay={0.1 + idx * 0.05}>
-                  <div className="card-base p-0 overflow-hidden border border-neutral-200/60 shadow-sm bg-neutral-50/30">
+                  <div className="card-base p-0 overflow-hidden border border-neutral-100 shadow-[0_4px_20px_-2px_rgba(0,0,0,0.05)] bg-white">
                     <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-neutral-100">
                        
                        {/* Left Side: Medical Bill */}
-                       <div className="p-5 bg-white flex flex-col">
+                       <div className="p-6 flex flex-col bg-transparent">
                           <div className="flex items-center gap-3 mb-4">
                              <div className="w-10 h-10 rounded-lg bg-neutral-100 flex items-center justify-center text-neutral-600">
                                 <FileText size={20} />
                              </div>
                              <div className="flex-1 min-w-0">
-                                <h4 className="font-semibold text-sm truncate">{claim.bill.name}</h4>
+                                <h4 className="font-extrabold text-[#111111] text-base truncate">{claim.bill.name}</h4>
                                 <p className="text-xs text-neutral-400 mt-0.5">Medical Bill • {claim.bill.fileSize}</p>
                              </div>
                              <div className="flex items-center gap-2">
@@ -382,9 +413,9 @@ export default function DocumentsPage() {
                                <button 
                                   onClick={() => handleSettle(claim.bill.id)}
                                   disabled={linking}
-                                  className="w-full flex items-center justify-center gap-2 text-xs font-medium text-neutral-500 bg-neutral-100 hover:bg-neutral-200 hover:text-charcoal py-2 rounded-lg transition-colors"
+                                  className="w-full flex items-center justify-center gap-2 text-xs font-bold text-white bg-charcoal hover:bg-charcoal-light py-2.5 rounded-xl transition-colors shadow-sm"
                                >
-                                  <ArchiveRestore size={14} /> Mark Claim as Settled
+                                  <ArchiveRestore size={16} /> Mark Claim as Settled
                                </button>
                             </div>
                           )}
@@ -403,7 +434,7 @@ export default function DocumentsPage() {
                                       <Receipt size={20} />
                                    </div>
                                    <div className="flex-1 min-w-0 flex items-center gap-2">
-                                      <h4 className="font-semibold text-sm truncate">{claim.eob.name}</h4>
+                                      <h4 className="font-extrabold text-[#111111] text-base truncate">{claim.eob.name}</h4>
                                       <span className="bg-success text-white text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider flex-shrink-0">Linked</span>
                                    </div>
                                    
@@ -463,19 +494,19 @@ export default function DocumentsPage() {
                </AnimateIn>
             ))}
 
-            {/* Display Orphaned Unassigned EOBs */}
+             {/* Display Orphaned Unassigned EOBs */}
             {unlinkedEobs.length > 0 && (
-               <div className="mt-8">
-                 <h3 className="text-sm font-semibold text-neutral-500 uppercase tracking-wider mb-4">Unassigned EOBs</h3>
-                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+               <div className="mt-10">
+                 <h3 className="text-sm font-bold text-neutral-500 uppercase tracking-wider mb-5">Unassigned EOBs</h3>
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                    {unlinkedEobs.map((eob) => (
-                      <div key={eob.id} className="card-base border border-neutral-200/60 bg-white">
+                      <div key={eob.id} className="card-base border border-neutral-100 bg-white shadow-[0_4px_20px_-2px_rgba(0,0,0,0.05)]">
                          <div className="flex items-center gap-3 mb-4">
                              <div className="w-10 h-10 rounded-lg bg-neutral-100 flex items-center justify-center text-neutral-600">
                                 <Receipt size={20} />
                              </div>
                              <div className="flex-1 min-w-0">
-                                <h4 className="font-semibold text-sm truncate">{eob.name}</h4>
+                                <h4 className="font-extrabold text-[#111111] text-base truncate">{eob.name}</h4>
                                 <p className="text-xs text-neutral-400 mt-0.5">Unlinked EOB • {eob.fileSize}</p>
                              </div>
                              <div className="flex items-center gap-2">
@@ -526,21 +557,21 @@ export default function DocumentsPage() {
           </h2>
           <div className="space-y-4 opacity-70 hover:opacity-100 transition-opacity">
             {settledClaims.map((claim, idx) => (
-               <div key={claim.bill.id} className="card-base p-0 overflow-hidden border border-neutral-200 bg-neutral-50/50">
-                 <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-neutral-200/60">
+               <div key={claim.bill.id} className="card-base p-0 overflow-hidden border border-neutral-200 bg-white">
+                 <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-neutral-100">
                     
                     {/* Left Side: Medical Bill */}
                     <div className="p-4 px-5">
                        <div className="flex items-center gap-3 mb-2">
-                          <div className="w-8 h-8 rounded-lg bg-neutral-200 flex items-center justify-center text-neutral-500">
+                          <div className="w-8 h-8 rounded-lg bg-neutral-100 flex items-center justify-center text-neutral-500">
                              <FileText size={16} />
                           </div>
                           <div className="flex-1 min-w-0">
-                             <h4 className="font-semibold text-sm truncate text-neutral-600 line-through decoration-neutral-300">{claim.bill.name}</h4>
+                             <h4 className="font-extrabold text-[#111111] text-base truncate text-neutral-400 line-through decoration-neutral-300">{claim.bill.name}</h4>
                              <p className="text-xs text-neutral-400 mt-0.5">Settled Bill</p>
                           </div>
                           <div className="flex items-center gap-2">
-                            <span className="bg-neutral-200 text-neutral-500 text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">Historical</span>
+                            <span className="bg-neutral-100 text-neutral-500 text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider border border-neutral-200">Historical</span>
                             <button 
                                   onClick={() => handleUnsettle(claim.bill.id)}
                                   disabled={linking}
@@ -574,7 +605,7 @@ export default function DocumentsPage() {
                                   <Receipt size={16} />
                                </div>
                                <div className="flex-1 min-w-0">
-                                  <h4 className="font-semibold text-sm truncate text-neutral-600 line-through decoration-neutral-300">{claim.eob.name}</h4>
+                                  <h4 className="font-extrabold text-[#111111] text-base truncate text-neutral-600 line-through decoration-neutral-300">{claim.eob.name}</h4>
                                   <p className="text-xs text-neutral-400 mt-0.5">Settled EOB</p>
                                </div>
                                <button 

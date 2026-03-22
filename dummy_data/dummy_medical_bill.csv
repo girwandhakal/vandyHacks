@@ -1,0 +1,5 @@
+Medical Bill
+Patient Name,Date of Service,Provider,Description,Procedure Code,Total Charged
+John Doe,2026-03-25,Mercy General Hospital,Emergency Room Visit,99283,$850.00
+John Doe,2026-03-25,Mercy General Hospital,CT Scan,70450,$1200.00
+John Doe,2026-03-25,Mercy General Hospital,Pharmacy/Medication,J0131,$150.00

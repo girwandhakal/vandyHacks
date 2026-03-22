@@ -13,10 +13,10 @@ export function StatCard({ label, value, subtitle, icon, trend, className }: Sta
   return (
     <div className={cn("card-base", className)}>
       <div className="flex items-start justify-between">
-        <div className="space-y-1">
-          <p className="text-sm text-neutral-500">{label}</p>
-          <p className="text-2xl font-semibold tracking-tight">{value}</p>
-          {subtitle && <p className="text-xs text-neutral-400">{subtitle}</p>}
+        <div className="space-y-1.5">
+          <p className="text-xs font-bold text-neutral-500 uppercase tracking-widest">{label}</p>
+          <p className="text-4xl font-extrabold tracking-tight text-charcoal">{value}</p>
+          {subtitle && <p className="text-xs font-medium text-neutral-400 mt-1">{subtitle}</p>}
         </div>
         {icon && <div className="text-neutral-400">{icon}</div>}
       </div>
