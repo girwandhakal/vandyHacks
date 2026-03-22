@@ -16,11 +16,19 @@ model User {
   email             String             @unique
   avatar            String?
   preferences       String             @default("{\"notifications\":true,\"emailDigest\":false,\"darkMode\":false,\"currency\":\"USD\"}")
-  connectedAccounts ConnectedAccount[]
-  conversations     Conversation[]
-  createdAt         DateTime           @default(now())
-  updatedAt         DateTime           @updatedAt
+  connectedAccounts            ConnectedAccount[]
+  conversations                Conversation[]
+  createdAt                    DateTime                     @default(now())
+  updatedAt                    DateTime                     @updatedAt
+  plaidItems                   PlaidItem[]
+  plaidAccounts                PlaidAccount[]
+  plaidTransactionsRaw         PlaidTransactionRaw[]
+  plaidTransactionsNorm        PlaidTransactionNormalized[]
+  financialProfiles            FinancialProfileSnapshot[]
+  insuranceAccumulators        InsuranceAccumulatorStatus[]
+  aiContextSnapshots           AIContextSnapshot[]
 }
+
 
 model ConnectedAccount {
   id       String   @id @default(cuid())
@@ -143,3 +151,122 @@ model Scenario {
   paymentScenarios     String // JSON: PaymentScenario[]
   createdAt            DateTime @default(now())
 }
+
+model PlaidItem {
+  id                   String                 @id @default(cuid())
+  userId               String
+  user                 User                   @relation(fields: [userId], references: [id])
+  plaidItemId          String                 @unique
+  accessTokenEncrypted String
+  institutionId        String?
+  institutionName      String?
+  cursor               String?
+  status               String                 @default("active") // "active" | "error"
+  lastSyncedAt         DateTime?
+  accounts             PlaidAccount[]
+  transactions         PlaidTransactionRaw[]
+  createdAt            DateTime               @default(now())
+  updatedAt            DateTime               @updatedAt
+}
+
+model PlaidAccount {
+  id               String      @id @default(cuid())
+  userId           String
+  user             User        @relation(fields: [userId], references: [id])
+  plaidItemId      String
+  item             PlaidItem   @relation(fields: [plaidItemId], references: [id])
+  plaidAccountId   String      @unique
+  name             String
+  officialName     String?
+  type             String
+  subtype          String?
+  currentBalance   Float?
+  availableBalance Float?
+  mask             String?
+  isoCurrencyCode  String?
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+}
+
+model PlaidTransactionRaw {
+  id                 String                      @id @default(cuid())
+  userId             String
+  user               User                        @relation(fields: [userId], references: [id])
+  plaidItemId        String
+  item               PlaidItem                   @relation(fields: [plaidItemId], references: [id])
+  plaidTransactionId String                      @unique
+  plaidAccountId     String
+  amount             Float
+  dateAuthorized     DateTime?
+  datePosted         DateTime?
+  name               String
+  merchantName       String?
+  pending            Boolean                     @default(false)
+  categoryJson       String?                     // JSON string
+  paymentChannel     String?
+  originalJson       String                      // JSON string of full payload
+  syncedAt           DateTime                    @default(now())
+  normalized         PlaidTransactionNormalized?
+}
+
+model PlaidTransactionNormalized {
+  id                 String              @id @default(cuid())
+  userId             String
+  user               User                @relation(fields: [userId], references: [id])
+  rawTransactionId   String              @unique
+  rawTransaction     PlaidTransactionRaw @relation(fields: [rawTransactionId], references: [id], onDelete: Cascade)
+  normalizedCategory String
+  cashflowDirection  String              // "inflow" | "outflow"
+  essentialityScore  String              // "essential" | "discretionary" | "wasteful" | "unknown"
+  recurringCandidate Boolean             @default(false)
+  merchantCanonical  String?
+  confidence         String              // "high" | "medium" | "low"
+  tagsJson           String?             // JSON string array
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+}
+
+model FinancialProfileSnapshot {
+  id                        String   @id @default(cuid())
+  userId                    String
+  user                      User     @relation(fields: [userId], references: [id])
+  asOfDate                  DateTime @default(now())
+  monthlyIncomeEstimate     Float?
+  monthlyFixedCosts         Float?
+  monthlyVariableCosts      Float?
+  monthlyMedicalSpend       Float?
+  monthlyDebtPayments       Float?
+  monthlySubscriptions      Float?
+  savingsRate               Float?
+  freeCashFlow              Float?
+  emergencyBufferMonths     Float?
+  housingStatus             String?  // "rent" | "own" | "other"
+  housingPaymentEstimate    Float?
+  affordabilityRiskLevel    String?  // "low" | "medium" | "high" | "critical"
+  insightsJson              String?  // JSON
+  createdAt                 DateTime @default(now())
+}
+
+model InsuranceAccumulatorStatus {
+  id                  String   @id @default(cuid())
+  userId              String
+  user                User     @relation(fields: [userId], references: [id])
+  asOfDate            DateTime @default(now())
+  deductibleMet       Float
+  oopMet              Float
+  deductibleRemaining Float
+  oopRemaining        Float
+  claimsYtdJson       String?  // JSON
+  createdAt           DateTime @default(now())
+}
+
+model AIContextSnapshot {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id])
+  asOfDate   DateTime @default(now())
+  contextJson String   // JSON
+  version    String
+  createdAt  DateTime @default(now())
+}
+
