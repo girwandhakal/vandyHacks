@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { procedurePricing } from "@/lib/pricing";
+import { generateFinancialScenario } from "@/lib/gemini";
 
 export async function GET() {
   try {
@@ -29,8 +30,8 @@ export async function POST(request: Request) {
     }
 
     const baseCost = procedure.baseCost;
-    const remainingDeductible = plan.deductibleIndiv - plan.deductibleMetIndiv;
-    const remainingOOP = plan.oopMaxIndiv - plan.oopSpentIndiv;
+    const remainingDeductible = Math.max(0, plan.deductibleIndiv - plan.deductibleMetIndiv);
+    const remainingOOP = Math.max(0, plan.oopMaxIndiv - plan.oopSpentIndiv);
     const coinsuranceRate = plan.coinsuranceIn; 
 
     let userResponsibility = 0;
@@ -40,7 +41,7 @@ export async function POST(request: Request) {
     } else {
       userResponsibility = remainingDeductible;
       const costAfterDeductible = baseCost - remainingDeductible;
-      userResponsibility += costAfterDeductible * (coinsuranceRate / 100);
+      userResponsibility += costAfterDeductible * ((100 - coinsuranceRate) / 100);
     }
 
     if (userResponsibility > remainingOOP) {
@@ -49,26 +50,18 @@ export async function POST(request: Request) {
 
     const insurancePortion = baseCost - userResponsibility;
 
+    // Simulate real user financial context
     const hsaAvailable = 3450.00;
-    const hsaRecommended = Math.min(hsaAvailable, userResponsibility * 0.60);
-    
     const monthlyIncome = 6000;
-    const strainRatio = userResponsibility / monthlyIncome;
-    let financialStrainLevel = "low";
-    if (strainRatio > 0.5) financialStrainLevel = "high";
-    else if (strainRatio > 0.15) financialStrainLevel = "moderate";
 
-    const paymentPlanMonths = 12;
-    const monthlyPayment = userResponsibility / paymentPlanMonths;
-    const financingAPR = 8.5;
-    const financingMonthly = (userResponsibility * (1 + (financingAPR / 100))) / paymentPlanMonths;
-
-    const paymentScenarios = [
-      { name: "HSA + Payment Plan", description: "Use HSA for 60%, finance the rest over 12 months", upfront: hsaRecommended, monthly: (userResponsibility - hsaRecommended) / 12 },
-      { name: "Standard Payment Plan", description: "0% interest hospital payment plan over 12 months", upfront: 0, monthly: monthlyPayment },
-      { name: "Medical Financing", description: "Third-party loan with 8.5% APR", upfront: 0, monthly: financingMonthly },
-      { name: "Pay in Full", description: "Pay upfront in full", upfront: userResponsibility, monthly: 0 },
-    ];
+    // --- WOW FACTOR: Connect to AI Financial Modeler ---
+    const aiScenario = await generateFinancialScenario({
+      procedureType,
+      totalEstimatedCost: baseCost,
+      userResponsibility,
+      hsaAvailable,
+      monthlyIncome
+    });
 
     const scenario = await prisma.scenario.create({
       data: {
@@ -78,18 +71,23 @@ export async function POST(request: Request) {
         insurancePortion,
         userResponsibility,
         hsaAvailable,
-        hsaRecommended,
-        paymentPlanMonths,
-        monthlyPayment,
-        financingAPR,
-        financingMonthly,
-        monthlyImpactPercent: (monthlyPayment / monthlyIncome) * 100,
-        financialStrainLevel,
-        paymentScenarios: JSON.stringify(paymentScenarios),
+        hsaRecommended: aiScenario.hsaRecommended,
+        paymentPlanMonths: 12, // Baseline fallback representation
+        monthlyPayment: aiScenario.paymentScenarios[0]?.monthlyAmount || 0,
+        financingAPR: 8.5,
+        financingMonthly: aiScenario.paymentScenarios[2]?.monthlyAmount || 0,
+        monthlyImpactPercent: aiScenario.monthlyImpactPercent,
+        financialStrainLevel: aiScenario.financialStrainLevel,
+        paymentScenarios: JSON.stringify(aiScenario.paymentScenarios),
       },
     });
 
-    return NextResponse.json(scenario);
+    return NextResponse.json({
+      scenario: {
+        ...scenario,
+        paymentScenarios: JSON.parse(scenario.paymentScenarios)
+      }
+    });
   } catch (error) {
     console.error("Error generating scenario:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import confetti from "canvas-confetti";
 import { AnimateIn } from "@/components/shared/animate-in";
 import { PageHeader } from "@/components/shared/page-header";
 import { StatusBadge } from "@/components/shared/status-badge";
@@ -48,8 +49,23 @@ export default function ScenariosPage() {
         if (active) setLoading(false);
       });
       
+      
     return () => { active = false; };
   }, [selectedProcedure]);
+
+  const handleSelectPlan = (planId: string) => {
+    if (selectedPlan !== planId) {
+      setSelectedPlan(planId);
+      confetti({
+        particleCount: 120,
+        spread: 80,
+        origin: { y: 0.6 },
+        colors: ['#3A86FF', '#10B981', '#F8F9FA']
+      });
+    } else {
+      setSelectedPlan(null);
+    }
+  };
 
   return (
     <div className="page-container">
@@ -62,14 +78,14 @@ export default function ScenariosPage() {
 
       <AnimateIn delay={0.05}>
         <div className="card-base mb-6">
-          <label className="text-sm font-medium text-charcoal mb-2 block">Select Procedure</label>
+          <label className="text-base font-bold text-[#111111] mb-2 block">Select Procedure</label>
           <div className="relative">
             <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" />
             <select
               value={selectedProcedure}
               onChange={(e) => setSelectedProcedure(e.target.value)}
               disabled={loading}
-              className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-neutral-200 text-sm bg-neutral-50 focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent appearance-none disabled:opacity-50"
+              className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-neutral-200 text-sm bg-white text-[#111111] focus:outline-none focus:ring-2 focus:ring-accent/50 focus:border-accent appearance-none disabled:opacity-50 mt-1 shadow-sm"
             >
               {mockProcedures.map((proc) => (
                 <option key={proc} value={proc}>{proc}</option>
@@ -93,20 +109,20 @@ export default function ScenariosPage() {
           <AnimateIn delay={0.1}>
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
               <div className="card-base text-center">
-                <p className="text-xs text-neutral-500 mb-1">Total Estimated Cost</p>
-                <p className="text-2xl font-semibold">{formatCurrency(scenario.totalEstimatedCost)}</p>
+                <p className="text-xs font-bold uppercase tracking-wider text-neutral-500 mb-1">Total Estimated Cost</p>
+                <p className="text-2xl font-bold text-charcoal">{formatCurrency(scenario.totalEstimatedCost)}</p>
               </div>
-              <div className="card-base text-center bg-success-muted border-success/20">
+              <div className="card-base text-center bg-success/10 border-success/20">
                 <p className="text-xs text-success mb-1">Insurance Covers</p>
-                <p className="text-2xl font-semibold text-success">{formatCurrency(scenario.insurancePortion)}</p>
+                <p className="text-2xl font-bold text-success">{formatCurrency(scenario.insurancePortion)}</p>
               </div>
-              <div className="card-base text-center bg-accent-muted border-accent/20">
-                <p className="text-xs text-accent mb-1">Your Responsibility</p>
-                <p className="text-2xl font-semibold text-accent">{formatCurrency(scenario.userResponsibility)}</p>
+              <div className="card-base text-center bg-accent/10 border-accent/20 shadow-[0_0_20px_rgba(58,134,255,0.1)]">
+                <p className="text-xs text-accent-light mb-1">Your Responsibility</p>
+                <p className="text-2xl font-bold text-accent-light">{formatCurrency(scenario.userResponsibility)}</p>
               </div>
               <div className="card-base text-center">
-                <p className="text-xs text-neutral-500 mb-1">Financial Strain</p>
-                <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full ${scenario.financialStrainLevel === 'high' ? 'bg-danger-muted text-danger' : scenario.financialStrainLevel === 'moderate' ? 'bg-warning-muted text-warning' : 'bg-success-muted text-success'} text-sm font-medium mt-1`}>
+                <p className="text-xs font-bold uppercase tracking-wider text-neutral-500 mb-1">Financial Strain</p>
+                <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full ${scenario.financialStrainLevel === 'high' ? 'bg-danger/20 text-danger border border-danger/20' : scenario.financialStrainLevel === 'moderate' ? 'bg-warning/20 text-warning border border-warning/20' : 'bg-success/20 text-success border border-success/20'} text-xs font-bold mt-1 shadow-sm`}>
                   <AlertTriangle size={14} />
                   {scenario.financialStrainLevel === 'high' ? 'High Strain' : scenario.financialStrainLevel === 'moderate' ? 'Moderate Strain' : 'Low Strain'}
                 </div>
@@ -131,15 +147,15 @@ export default function ScenariosPage() {
                   <div className="space-y-2">
                     <div className="flex justify-between text-sm gap-8">
                       <span className="text-neutral-500">HSA Available</span>
-                      <span className="font-medium">{formatCurrency(scenario.hsaAvailable)}</span>
+                      <span className="font-bold text-[#111111]">{formatCurrency(scenario.hsaAvailable)}</span>
                     </div>
                     <div className="flex justify-between text-sm gap-8">
                       <span className="text-neutral-500">Recommended Use</span>
-                      <span className="font-medium text-accent">{formatCurrency(scenario.hsaRecommended)}</span>
+                      <span className="font-bold text-accent">{formatCurrency(scenario.hsaRecommended)}</span>
                     </div>
                     <div className="flex justify-between text-sm gap-8">
                       <span className="text-neutral-500">Remaining After</span>
-                      <span className="font-medium">{formatCurrency(scenario.hsaAvailable - scenario.hsaRecommended)}</span>
+                      <span className="font-bold text-[#111111]">{formatCurrency(scenario.hsaAvailable - scenario.hsaRecommended)}</span>
                     </div>
                   </div>
                 </div>
@@ -151,8 +167,8 @@ export default function ScenariosPage() {
                   <h3 className="section-title">Monthly Impact</h3>
                 </div>
                 <div className="text-center py-4">
-                  <p className="text-4xl font-semibold text-charcoal">{scenario.monthlyImpactPercent}%</p>
-                  <p className="text-sm text-neutral-500 mt-1">of monthly income</p>
+                  <p className="text-5xl font-bold text-[#111111] drop-shadow-sm">{scenario.monthlyImpactPercent}%</p>
+                  <p className="text-sm text-neutral-500 mt-2">of monthly income</p>
                   <p className="text-xs text-neutral-400 mt-2">
                     Based on typical payment plan
                   </p>
@@ -172,36 +188,36 @@ export default function ScenariosPage() {
                 return (
                   <button
                     key={plan.id}
-                    onClick={() => setSelectedPlan(isSelected ? null : plan.id)}
-                    className={`card-base text-left transition-all duration-200 ${
-                      isSelected ? "ring-2 ring-charcoal border-charcoal" : "hover:border-neutral-300"
+                    onClick={() => handleSelectPlan(plan.id)}
+                    className={`card-base text-left transition-all duration-300 ${
+                      isSelected ? "ring-2 ring-accent border-accent bg-accent/10 shadow-[0_0_30px_rgba(58,134,255,0.2)]" : "hover:border-neutral-200 hover:bg-white/50"
                     }`}
                   >
                     <div className="flex items-start gap-3 mb-3">
-                      <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                        isSelected ? "bg-charcoal text-white" : "bg-neutral-50 text-neutral-500"
+                      <div className={`w-12 h-12 rounded-xl flex items-center justify-center transition-colors shadow-sm border ${
+                        isSelected ? "bg-accent text-white border-transparent" : "bg-white border-neutral-100 text-neutral-400"
                       }`}>
-                        <Icon size={18} />
+                        <Icon size={20} />
                       </div>
-                      <div className="flex-1">
-                        <h4 className="text-sm font-semibold">{plan.label}</h4>
-                        <p className="text-xs text-neutral-400 mt-0.5">{plan.duration}</p>
+                      <div className="flex-1 mt-1">
+                        <h4 className="text-base font-extrabold text-[#111111]">{plan.label}</h4>
+                        <p className="text-xs text-accent mt-0.5 font-medium">{plan.duration}</p>
                       </div>
-                      {isSelected && <CheckCircle2 size={18} className="text-charcoal" />}
+                      {isSelected && <CheckCircle2 size={24} className="text-accent drop-shadow-md" />}
                     </div>
 
-                    <div className="flex justify-between items-end mb-3">
+                    <div className="flex justify-between items-end mb-4">
                       <div>
                         <p className="text-xs text-neutral-500">Monthly</p>
-                        <p className="text-xl font-semibold">{formatCurrency(plan.monthlyAmount)}<span className="text-sm font-normal text-neutral-400">/mo</span></p>
+                        <p className="text-2xl font-bold text-[#111111]">{formatCurrency(plan.monthlyAmount)}<span className="text-sm font-bold text-neutral-500 tracking-wide">/mo</span></p>
                       </div>
                       <div className="text-right">
                         <p className="text-xs text-neutral-500">Total Cost</p>
-                        <p className="text-sm font-semibold">{formatCurrency(plan.totalCost)}</p>
+                        <p className="text-base font-extrabold text-[#111111]">{formatCurrency(plan.totalCost)}</p>
                       </div>
                     </div>
 
-                    <p className="text-xs text-neutral-500 pt-3 border-t border-neutral-100">
+                    <p className="text-xs text-neutral-500 pt-3 border-t border-neutral-100 leading-relaxed">
                       {plan.description}
                     </p>
                   </button>

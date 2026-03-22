@@ -99,7 +99,7 @@ export default function DashboardPage() {
           {alerts.map((alert: any) => (
             <div
               key={alert.id}
-              className="flex items-start gap-3 p-4 rounded-xl border border-neutral-200 bg-white"
+              className="flex items-start gap-3 p-4 rounded-2xl border border-neutral-100 bg-white/80 backdrop-blur-md hover:bg-white shadow-sm transition-colors"
             >
               <div className="mt-0.5">
                 {alert.type === "success" && <Sparkles size={16} className="text-success" />}
@@ -108,7 +108,7 @@ export default function DashboardPage() {
                 {alert.type === "action" && <FileText size={16} className="text-accent" />}
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-charcoal">{alert.title}</p>
+                <p className="text-base font-bold text-[#111111]">{alert.title}</p>
                 <p className="text-xs text-neutral-500 mt-0.5">{alert.description}</p>
               </div>
               {alert.actionLabel && (
@@ -135,11 +135,11 @@ export default function DashboardPage() {
               <p className="text-sm text-neutral-500">Individual Deductible</p>
               <p className="text-xl font-semibold">
                 {formatCurrency(plan.deductibleMetIndiv)}{" "}
-                <span className="text-sm font-normal text-neutral-400">
+                <span className="text-sm font-normal text-neutral-500">
                   of {formatCurrency(plan.deductibleIndiv)}
                 </span>
               </p>
-              <p className="text-xs text-neutral-400 mt-1">
+              <p className="text-xs text-neutral-500 mt-1">
                 {formatCurrency(plan.deductibleIndiv - plan.deductibleMetIndiv)} remaining
               </p>
               <StatusBadge
@@ -164,11 +164,11 @@ export default function DashboardPage() {
               <p className="text-sm text-neutral-500">Out-of-Pocket Max</p>
               <p className="text-xl font-semibold">
                 {formatCurrency(plan.oopSpentIndiv)}{" "}
-                <span className="text-sm font-normal text-neutral-400">
+                <span className="text-sm font-normal text-neutral-500">
                   of {formatCurrency(plan.oopMaxIndiv)}
                 </span>
               </p>
-              <p className="text-xs text-neutral-400 mt-1">
+              <p className="text-xs text-neutral-500 mt-1">
                 {formatCurrency(plan.oopMaxIndiv - plan.oopSpentIndiv)} remaining
               </p>
               <StatusBadge
@@ -227,7 +227,7 @@ export default function DashboardPage() {
                   href={action.href}
                   className="card-base flex flex-col items-center gap-2.5 py-5 text-center group"
                 >
-                  <div className="w-10 h-10 rounded-lg bg-neutral-50 flex items-center justify-center text-neutral-500 group-hover:bg-charcoal group-hover:text-white transition-colors duration-200">
+                  <div className="w-10 h-10 rounded-xl bg-white border border-neutral-100 shadow-sm flex items-center justify-center text-neutral-400 group-hover:bg-accent group-hover:border-accent group-hover:text-white transition-all duration-300 group-hover:shadow-[0_0_15px_rgba(58,134,255,0.3)] group-hover:-translate-y-1">
                     <Icon size={18} />
                   </div>
                   <span className="text-xs font-medium text-neutral-600">{action.label}</span>
@@ -254,7 +254,7 @@ export default function DashboardPage() {
                 Ask about symptoms, care costs, coverage details, or compare treatment options.
               </p>
             </div>
-            <div className="flex items-center gap-2 p-3 rounded-lg bg-neutral-50 group-hover:bg-charcoal group-hover:text-white transition-colors duration-200">
+            <div className="flex items-center gap-2 p-3 rounded-xl bg-white border border-neutral-100 shadow-sm group-hover:bg-accent/10 group-hover:text-accent group-hover:border-accent/30 transition-all duration-300">
               <MessageSquare size={14} />
               <span className="text-sm">Ask a question about your healthcare costs...</span>
               <ArrowRight size={14} className="ml-auto" />
@@ -276,7 +276,7 @@ export default function DashboardPage() {
                       {reminder.status === "upcoming" && <Calendar size={16} className="text-neutral-400" />}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-charcoal">{reminder.title}</p>
+                      <p className="text-base font-bold text-[#111111]">{reminder.title}</p>
                       <p className="text-xs text-neutral-400">{reminder.type}</p>
                     </div>
                     <div className="text-right">
@@ -314,7 +314,7 @@ export default function DashboardPage() {
                   const Icon = iconMap[activity.icon] || FileText;
                   return (
                     <div key={activity.id} className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-lg bg-neutral-50 flex items-center justify-center">
+                      <div className="w-8 h-8 rounded-lg bg-white border border-neutral-100 shadow-sm flex items-center justify-center">
                         <Icon size={14} className="text-neutral-400" />
                       </div>
                       <div className="flex-1 min-w-0">
@@ -334,7 +334,7 @@ export default function DashboardPage() {
           <Link href="/insurance" className="card-base group">
             <div className="flex items-center justify-between mb-4">
               <h3 className="section-title">Insurance Plan</h3>
-              <ArrowRight size={16} className="text-neutral-400 group-hover:text-charcoal transition-colors" />
+              <ArrowRight size={16} className="text-neutral-400 group-hover:text-white transition-colors" />
             </div>
             <div className="space-y-3">
               <div className="flex justify-between items-center">
