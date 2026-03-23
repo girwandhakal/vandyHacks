@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { AnimateIn } from "@/components/shared/animate-in";
 import { StatusBadge } from "@/components/shared/status-badge";
@@ -212,7 +212,7 @@ const mockSuggestedQuestions = [
   "Should I negotiate or ask for a payment plan?",
 ];
 
-export default function AssistantPage() {
+function AssistantPageContent() {
   const searchParams = useSearchParams();
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState<any[]>([]);
@@ -379,5 +379,13 @@ export default function AssistantPage() {
         </form>
       </div>
     </div>
+  );
+}
+
+export default function AssistantPage() {
+  return (
+    <Suspense fallback={<div className="flex h-screen items-center justify-center bg-white text-sm text-neutral-500">Loading assistant...</div>}>
+      <AssistantPageContent />
+    </Suspense>
   );
 }

@@ -1,6 +1,9 @@
 const { PrismaClient } = require('@prisma/client');
 const fs = require('fs');
+const path = require('path');
+
 const prisma = new PrismaClient();
+const projectRoot = path.resolve(__dirname, '..', '..');
 
 async function run() {
   const plan = await prisma.insurancePlan.findFirst();
@@ -12,12 +15,13 @@ async function run() {
   const obj = { plan, latestDoc, hasTxt: false, txtSample: null };
 
   if (latestDoc && latestDoc.filePath) {
-    const txtPath = require('path').join(process.cwd(), latestDoc.filePath + ".txt");
+    const relativeFilePath = latestDoc.filePath.replace(/^[/\\]+/, '');
+    const txtPath = path.join(projectRoot, `${relativeFilePath}.txt`);
     if (fs.existsSync(txtPath)) {
       obj.hasTxt = true;
       obj.txtSample = fs.readFileSync(txtPath, "utf-8").substring(0, 200);
     } else {
-        obj.txtPathAttempted = txtPath;
+      obj.txtPathAttempted = txtPath;
     }
   }
 
