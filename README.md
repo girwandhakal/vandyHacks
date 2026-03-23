@@ -74,7 +74,7 @@ ClearPath is a full-stack Next.js application with the UI and server routes in t
 
 ```bash
 git clone <your-fork-url>
-cd vandyHacks
+cd ClearPath
 npm install --legacy-peer-deps
 ```
 
