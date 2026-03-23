@@ -5,10 +5,10 @@ const endpoints = [
   { path: '/api/insurance', method: 'GET' },
   { path: '/api/reminders', method: 'GET' },
   { path: '/api/dashboard', method: 'GET' },
+  { path: '/api/cost-estimator', method: 'GET' },
   { path: '/api/assistant/conversations', method: 'GET' },
   { path: '/api/documents', method: 'GET' },
-  { path: '/api/scenarios', method: 'GET' },
-  { path: '/api/insights', method: 'GET' }
+  { path: '/api/scenarios', method: 'GET' }
 ];
 
 async function runTests() {

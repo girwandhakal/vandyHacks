@@ -1,4 +1,8 @@
 const fs = require('fs');
+const path = require('path');
+
+const outputDir = path.resolve(__dirname, '..', 'output');
+const outputPath = path.join(outputDir, 'test-upload-results.json');
 
 async function uploadDocument(content, filename, type) {
   const fileBlob = new Blob([content], { type: 'text/plain' });
@@ -52,7 +56,9 @@ async function run() {
     results.docs = docs.slice(0, 2);
   } catch(e) {}
   
-  fs.writeFileSync('test-upload-results.json', JSON.stringify(results, null, 2));
+  fs.mkdirSync(outputDir, { recursive: true });
+  fs.writeFileSync(outputPath, JSON.stringify(results, null, 2));
+  console.log(`Wrote ${outputPath}`);
   console.log("Done checking!");
 }
 run();

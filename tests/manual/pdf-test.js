@@ -1,4 +1,7 @@
 const fs = require('fs');
+const path = require('path');
+
+const projectRoot = path.resolve(__dirname, '..', '..');
 
 async function test(filename) {
   try {
@@ -17,7 +20,7 @@ async function test(filename) {
 }
 
 async function run() {
-  await test('ISO_Care_2025_2026_A.pdf');
-  await test('download.pdf');
+  await test(path.join(projectRoot, 'dummy_data', 'ISO_Care_2025_2026_A.pdf'));
+  await test(path.join(projectRoot, 'dummy_data', 'reference-pdfs', 'download.pdf'));
 }
 run();

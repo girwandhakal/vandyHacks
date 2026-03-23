@@ -50,3 +50,7 @@ prisma/dev.db-journal
 
 # uploads
 uploads/
+
+# local script artifacts
+scripts/output/
+tests/output/

@@ -1,4 +1,8 @@
 const fs = require('fs');
+const path = require('path');
+
+const outputDir = path.resolve(__dirname, '..', 'output');
+const outputPath = path.join(outputDir, 'test-results.json');
 async function run() {
   const results = {};
   
@@ -25,6 +29,8 @@ async function run() {
     results.documentResponse = await res2.json();
   } catch(e) { results.documentError = e.message; }
   
-  fs.writeFileSync('test-results.json', JSON.stringify(results, null, 2));
+  fs.mkdirSync(outputDir, { recursive: true });
+  fs.writeFileSync(outputPath, JSON.stringify(results, null, 2));
+  console.log(`Wrote ${outputPath}`);
 }
 run();
