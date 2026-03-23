@@ -2,8 +2,14 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { analyzeMedicalDocument } from "@/lib/gemini";
 import { syncDocumentModels } from "@/lib/ai/document-sync";
+import { getDocuments } from "@/lib/server/documents";
 import fs from "fs";
 import path from "path";
+
+function loadPdfParseNew() {
+  const runtimeRequire = eval("require") as NodeRequire;
+  return runtimeRequire("pdf-parse-new");
+}
 
 function toNumber(value: unknown, fallback = 0): number {
   if (typeof value === "number" && Number.isFinite(value)) return value;
@@ -271,9 +277,7 @@ function normalizeInsuranceExtractedData(data: any) {
 
 export async function GET() {
   try {
-    const documents = await prisma.document.findMany({
-      orderBy: { uploadedAt: "desc" },
-    });
+    const documents = await getDocuments();
     return NextResponse.json(documents);
   } catch (error) {
     console.error("Error fetching documents:", error);
@@ -311,8 +315,7 @@ export async function POST(request: Request) {
     if (file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf")) {
       console.log(`[DOC-UPLOAD] File identified as PDF. Attempting to parse with pdf-parse-new SmartParser...`);
       try {
-        // Use dynamic require to avoid Next.js Webpack ESM bundling errors
-        const PdfParse = require("pdf-parse-new");
+        const PdfParse = loadPdfParseNew();
         const smartParser = new PdfParse.SmartPDFParser();
         const pdfResult = await smartParser.parse(buffer);
         fileText = pdfResult.text.substring(0, 15000);

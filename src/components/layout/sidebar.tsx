@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import {
   LayoutDashboard,
@@ -29,6 +29,7 @@ const navItems = [
 
 export function Sidebar() {
   const pathname = usePathname();
+  const router = useRouter();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [pendingHref, setPendingHref] = useState<string | null>(null);
 
@@ -83,6 +84,8 @@ export function Sidebar() {
               <Link
                 key={item.href}
                 href={item.href}
+                onMouseEnter={() => router.prefetch(item.href)}
+                onFocus={() => router.prefetch(item.href)}
                 onPointerDown={() => setPendingHref(item.href)}
                 onClick={() => {
                   setPendingHref(item.href);
