@@ -1,6 +1,3 @@
-"use client";
-
-import { useState, useEffect } from "react";
 import Link from "next/link";
 import { AnimateIn } from "@/components/shared/animate-in";
 import { PageHeader } from "@/components/shared/page-header";
@@ -9,6 +6,7 @@ import { StatusBadge } from "@/components/shared/status-badge";
 import { ProgressRing } from "@/components/shared/progress-ring";
 import { formatCurrency } from "@/lib/utils";
 import { Skeleton } from "@/components/shared/skeleton";
+import { getDashboardData } from "@/lib/server/dashboard";
 import {
   Calculator,
   MessageSquare,
@@ -31,24 +29,10 @@ const iconMap: Record<string, React.ElementType> = {
   FileUp, FileText, Wallet, TrendingUp,
 };
 
-export default function DashboardPage() {
-  const [data, setData] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+export default async function DashboardPage() {
+  const data = await getDashboardData();
 
-  useEffect(() => {
-    fetch('/api/dashboard')
-      .then(res => res.json())
-      .then(json => {
-        setData(json);
-        setLoading(false);
-      })
-      .catch(err => {
-        console.error("Failed to fetch dashboard data:", err);
-        setLoading(false);
-      });
-  }, []);
-
-  if (loading || !data) {
+  if (!data) {
     return (
       <div className="page-container space-y-8">
         <Skeleton className="h-20 w-3/4" />

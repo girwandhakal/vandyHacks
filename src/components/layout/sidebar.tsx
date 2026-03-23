@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import {
   LayoutDashboard,
   MessageSquare,
@@ -29,7 +29,15 @@ const navItems = [
 
 export function Sidebar() {
   const pathname = usePathname();
+  const router = useRouter();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [pendingHref, setPendingHref] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (pendingHref === pathname) {
+      setPendingHref(null);
+    }
+  }, [pathname, pendingHref]);
 
   return (
     <>
@@ -71,20 +79,38 @@ export function Sidebar() {
         {/* Navigation */}
         <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
           {navItems.map((item) => {
-            const isActive = pathname === item.href;
+            const isActive = (pendingHref ?? pathname) === item.href;
             return (
               <Link
                 key={item.href}
                 href={item.href}
-                onClick={() => setMobileOpen(false)}
+                onMouseEnter={() => router.prefetch(item.href)}
+                onFocus={() => router.prefetch(item.href)}
+                onPointerDown={() => setPendingHref(item.href)}
+                onClick={() => {
+                  setPendingHref(item.href);
+                  setMobileOpen(false);
+                }}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter" || event.key === " ") {
+                    setPendingHref(item.href);
+                  }
+                }}
+                aria-current={isActive ? "page" : undefined}
                 className={cn(
-                  "flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group text-sm font-medium",
+                  "group flex items-center gap-3 rounded-xl border px-4 py-3 text-sm font-medium transition-[background-color,border-color,color,transform,box-shadow] duration-200 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/20",
                   isActive
-                    ? "bg-white/10 text-white shadow-inner border border-white/5"
-                    : "text-white/60 hover:bg-white/5 hover:text-white"
+                    ? "border-white/10 bg-white/10 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.05),0_12px_24px_rgba(0,0,0,0.16)]"
+                    : "border-transparent text-white/60 hover:-translate-y-0.5 hover:border-white/10 hover:bg-white/[0.07] hover:text-white"
                 )}
               >
-                <item.icon size={18} />
+                <item.icon
+                  size={18}
+                  className={cn(
+                    "transition-transform duration-200 ease-out",
+                    isActive ? "text-white" : "group-hover:translate-x-0.5"
+                  )}
+                />
                 {item.label}
               </Link>
             );

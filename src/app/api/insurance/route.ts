@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { getInsurancePlan } from "@/lib/server/insurance";
 
 export async function GET() {
   try {
-    const plan = await prisma.insurancePlan.findFirst();
+    const plan = await getInsurancePlan();
 
     if (!plan) {
       return NextResponse.json({ error: "Insurance plan not found" }, { status: 404 });

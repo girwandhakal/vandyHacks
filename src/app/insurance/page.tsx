@@ -1,12 +1,10 @@
-"use client";
-
-import { useState, useEffect } from "react";
 import { AnimateIn } from "@/components/shared/animate-in";
 import { PageHeader } from "@/components/shared/page-header";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { ProgressRing } from "@/components/shared/progress-ring";
 import { Skeleton } from "@/components/shared/skeleton";
 import { formatCurrency } from "@/lib/utils";
+import { getInsurancePlan } from "@/lib/server/insurance";
 import {
   Shield,
   Calendar,
@@ -18,24 +16,10 @@ import {
   Activity,
 } from "lucide-react";
 
-export default function InsurancePage() {
-  const [plan, setPlan] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+export default async function InsurancePage() {
+  const plan = await getInsurancePlan();
 
-  useEffect(() => {
-    fetch('/api/insurance')
-      .then(res => res.json())
-      .then(data => {
-        setPlan(data);
-        setLoading(false);
-      })
-      .catch(err => {
-        console.error("Failed to fetch insurance:", err);
-        setLoading(false);
-      });
-  }, []);
-
-  if (loading || !plan) {
+  if (!plan) {
     return (
       <div className="page-container space-y-6">
         <Skeleton className="h-20 w-3/4 mb-6" />
